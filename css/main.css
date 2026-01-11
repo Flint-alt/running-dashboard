@@ -5,34 +5,34 @@
 
 /* ===== CSS Custom Properties (Variables) ===== */
 :root {
-    /* Colors */
-    --primary-color: #2563eb;
-    --primary-dark: #1e40af;
-    --primary-light: #60a5fa;
+    /* Claude-inspired Colors */
+    --primary-color: #D97706;
+    --primary-dark: #B45309;
+    --primary-light: #F59E0B;
 
-    --secondary-color: #10b981;
-    --secondary-dark: #059669;
+    --secondary-color: #059669;
+    --secondary-dark: #047857;
 
-    --danger-color: #ef4444;
-    --warning-color: #f59e0b;
-    --info-color: #3b82f6;
+    --danger-color: #DC2626;
+    --warning-color: #F59E0B;
+    --info-color: #0891B2;
 
     --text-primary: #1f2937;
     --text-secondary: #6b7280;
     --text-tertiary: #9ca3af;
 
     --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --bg-tertiary: #f3f4f6;
+    --bg-secondary: #FEF7F3;
+    --bg-tertiary: #FEF3E8;
 
-    --border-color: #e5e7eb;
-    --border-color-dark: #d1d5db;
+    --border-color: #FDE4D3;
+    --border-color-dark: #FBCFB3;
 
-    /* Phase Colors */
-    --phase-1-color: #3b82f6;
-    --phase-2-color: #8b5cf6;
-    --phase-3-color: #ec4899;
-    --phase-4-color: #f59e0b;
+    /* Phase Colors - warm tones */
+    --phase-1-color: #0891B2;
+    --phase-2-color: #7C3AED;
+    --phase-3-color: #DB2777;
+    --phase-4-color: #D97706;
 
     /* Spacing */
     --spacing-xs: 0.25rem;
@@ -259,18 +259,20 @@ a:hover {
 /* ===== Progress Bar ===== */
 .progress-bar {
     width: 100%;
-    height: 8px;
+    height: 10px;
     background-color: var(--bg-tertiary);
     border-radius: var(--radius-full);
     overflow: hidden;
     margin-top: var(--spacing-sm);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .progress-fill {
     height: 100%;
-    background-color: var(--secondary-color);
+    background: linear-gradient(90deg, #059669 0%, #10b981 100%);
     border-radius: var(--radius-full);
     transition: width var(--transition-slow);
+    box-shadow: 0 0 8px rgba(5, 150, 105, 0.4);
 }
 
 /* ===== Section Headers ===== */

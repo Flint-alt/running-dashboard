@@ -24,12 +24,15 @@
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
     color: white;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-    background-color: var(--primary-dark);
+    background: linear-gradient(135deg, #B45309 0%, #D97706 100%);
+    box-shadow: 0 6px 16px rgba(217, 119, 6, 0.4);
+    transform: translateY(-2px);
     text-decoration: none;
 }
 
@@ -108,7 +111,7 @@ select:focus,
 textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
 }
 
 input:invalid:not(:focus),
@@ -171,7 +174,10 @@ input[type="radio"] {
     font-size: var(--font-size-2xl);
     font-weight: 700;
     font-family: var(--font-mono);
-    color: var(--primary-color);
+    background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 /* Form validation states */
