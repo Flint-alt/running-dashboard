@@ -1,0 +1,387 @@
+/**
+ * Components CSS - Forms, buttons, and reusable UI components
+ * Running Training Dashboard
+ */
+
+/* ===== Buttons ===== */
+.btn {
+    display: inline-block;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    font-family: var(--font-sans);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--primary-dark);
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--secondary-dark);
+    text-decoration: none;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: #dc2626;
+    text-decoration: none;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline:hover:not(:disabled) {
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+}
+
+/* ===== Forms ===== */
+form {
+    width: 100%;
+}
+
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+/* Input fields */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+select,
+textarea {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    transition: border-color var(--transition-fast);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+input:invalid:not(:focus),
+select:invalid:not(:focus),
+textarea:invalid:not(:focus) {
+    border-color: var(--danger-color);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Select styling */
+select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--spacing-sm) center;
+    padding-right: var(--spacing-xl);
+}
+
+/* Checkbox and Radio */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    width: auto;
+    margin-right: var(--spacing-sm);
+    cursor: pointer;
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+/* Pace Display (special read-only display in form) */
+.pace-display {
+    background-color: var(--bg-tertiary);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+}
+
+.pace-display label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.pace-value {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--primary-color);
+}
+
+/* Form validation states */
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+    border-color: var(--danger-color);
+}
+
+.form-group.has-success input,
+.form-group.has-success select,
+.form-group.has-success textarea {
+    border-color: var(--secondary-color);
+}
+
+.field-error {
+    color: var(--danger-color);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+}
+
+/* ===== Run Type Badges (in forms and displays) ===== */
+.run-type-badge.parkrun {
+    background-color: rgba(37, 99, 235, 0.1);
+    color: #1e40af;
+}
+
+.run-type-badge.long {
+    background-color: rgba(236, 72, 153, 0.1);
+    color: #be185d;
+}
+
+.run-type-badge.easy {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #047857;
+}
+
+.run-type-badge.tempo {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+}
+
+.run-type-badge.intervals {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #b91c1c;
+}
+
+.run-type-badge.recovery {
+    background-color: rgba(139, 92, 246, 0.1);
+    color: #6d28d9;
+}
+
+/* ===== Tables (for training plan alternative view) ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+th {
+    background-color: var(--bg-tertiary);
+    padding: var(--spacing-md);
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+td {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+/* ===== Modal/Dialog (for confirmations) ===== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn var(--transition-base);
+}
+
+.modal {
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    max-width: 500px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp var(--transition-slow);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal h3 {
+    margin-bottom: var(--spacing-md);
+}
+
+.modal-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+    margin-top: var(--spacing-lg);
+}
+
+/* ===== Tooltips (future enhancement) ===== */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--text-primary);
+    color: white;
+    font-size: var(--font-size-xs);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    z-index: 100;
+}
+
+/* ===== Loading Spinner ===== */
+.spinner {
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 0.8s linear infinite;
+    margin: var(--spacing-xl) auto;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== Action Buttons (edit/delete in run cards) ===== */
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    padding: var(--spacing-xs);
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+    font-size: var(--font-size-lg);
+}
+
+.btn-icon:hover {
+    color: var(--primary-color);
+}
+
+.btn-icon.delete:hover {
+    color: var(--danger-color);
+}
+
+/* ===== Responsive Form Adjustments ===== */
+@media (max-width: 480px) {
+    .btn {
+        width: 100%;
+        padding: var(--spacing-md);
+    }
+
+    .modal {
+        width: 95%;
+        padding: var(--spacing-lg);
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+    }
+}

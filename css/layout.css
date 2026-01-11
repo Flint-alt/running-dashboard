@@ -1,0 +1,464 @@
+/**
+ * Layout CSS - Responsive layouts, navigation, and page structure
+ * Running Training Dashboard
+ */
+
+/* ===== Navigation ===== */
+.main-nav {
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-md) var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.app-title {
+    font-size: var(--font-size-xl);
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+    display: block;
+}
+
+.nav-link:hover {
+    color: var(--primary-color);
+    background-color: var(--bg-tertiary);
+    text-decoration: none;
+}
+
+.nav-link.active {
+    color: var(--primary-color);
+    background-color: var(--primary-light);
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+/* ===== Main Content ===== */
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-lg);
+}
+
+/* ===== Page Sections (SPA routing) ===== */
+.page-section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.page-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== Cards ===== */
+.card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.card h3 {
+    margin-bottom: var(--spacing-md);
+}
+
+/* ===== Dashboard Grid ===== */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.dashboard-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+/* Current Week Card */
+.current-week-card .week-number {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+.current-week-card .week-dates {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.current-week-card .planned-runs {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.planned-run {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-sm);
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+}
+
+.run-label {
+    color: var(--text-secondary);
+}
+
+/* Weight Progress Card */
+.weight-progress-card .weight-stat {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.weight-progress-card .stat-label {
+    color: var(--text-secondary);
+}
+
+.weight-progress-card .stat-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Milestone Card */
+.milestone-card {
+    text-align: center;
+}
+
+.milestone-card .milestone-name {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.milestone-card .milestone-distance {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.milestone-card .milestone-target {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.milestone-card .milestone-countdown {
+    margin-top: var(--spacing-md);
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+}
+
+/* Week Summary Card */
+.week-summary-card .summary-stat {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.week-summary-card .summary-stat:last-child {
+    border-bottom: none;
+}
+
+/* Recent Runs Card */
+.recent-runs-card .run-item {
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--spacing-md);
+    transition: border-color var(--transition-fast);
+}
+
+.recent-runs-card .run-item:hover {
+    border-color: var(--primary-color);
+}
+
+.recent-runs-card .run-item:last-child {
+    margin-bottom: 0;
+}
+
+.run-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.run-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.run-type-badge {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.run-date {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.run-stats {
+    display: flex;
+    gap: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+}
+
+.run-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.run-stat-label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+}
+
+.run-stat-value {
+    font-weight: 600;
+    font-family: var(--font-mono);
+}
+
+/* ===== Training Plan Layout ===== */
+.training-plan-container {
+    overflow-x: auto;
+}
+
+#training-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.week-card {
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    transition: all var(--transition-fast);
+}
+
+.week-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+}
+
+.week-card.current-week {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+}
+
+.week-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.week-number {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.week-dates {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+
+.week-runs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.week-run {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+}
+
+/* ===== Form Layouts ===== */
+.form-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+/* ===== Progress & Charts ===== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    text-align: center;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-value {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+.chart-card {
+    margin-bottom: var(--spacing-lg);
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-top: var(--spacing-md);
+}
+
+/* ===== Weight Section ===== */
+.weight-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: var(--spacing-lg);
+}
+
+/* ===== Responsive Design ===== */
+
+/* Tablet (768px and below) */
+@media (max-width: 768px) {
+    .nav-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-links {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .nav-link {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: var(--font-size-sm);
+    }
+
+    .main-content {
+        padding: var(--spacing-md);
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .weight-container {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chart-container {
+        height: 250px;
+    }
+}
+
+/* Mobile (480px and below) */
+@media (max-width: 480px) {
+    .app-title {
+        font-size: var(--font-size-lg);
+    }
+
+    .nav-links {
+        flex-direction: column;
+        width: 100%;
+        gap: var(--spacing-xs);
+    }
+
+    .nav-link {
+        text-align: center;
+    }
+
+    h2 {
+        font-size: var(--font-size-xl);
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #training-plan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .run-stats {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+}

@@ -1,0 +1,435 @@
+/**
+ * dashboard.js - Main dashboard view
+ * Displays training overview, recent runs, and progress summary
+ */
+
+import { getRuns, getRunsForWeek, getRun, deleteRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData } from '../data/storage.js';
+import { getTodayISO, getCurrentWeek, formatDate, formatDateRange } from '../utils/date.js';
+import { formatPace, formatDuration, formatDistance } from '../utils/pace.js';
+import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
+
+/**
+ * Initialize dashboard on app load
+ */
+export function initDashboard() {
+    updateDashboard();
+    setupDataManagement();
+}
+
+/**
+ * Update dashboard with current data
+ * Called when navigating to dashboard or after data changes
+ */
+export function updateDashboard() {
+    updateCurrentWeek();
+    updateWeightProgress();
+    updateNextMilestone();
+    updateWeekSummary();
+    updateRecentRuns();
+}
+
+/**
+ * Update current week info card
+ */
+function updateCurrentWeek() {
+    const settings = getSettings();
+    const today = getTodayISO();
+    const currentWeek = getCurrentWeek(today, settings.trainingPlanStart);
+
+    const weekNumEl = document.getElementById('week-num');
+    const weekDatesEl = document.getElementById('week-dates');
+    const phaseBadgeEl = document.getElementById('phase-badge');
+    const plannedParkrunEl = document.getElementById('planned-parkrun');
+    const plannedLongRunEl = document.getElementById('planned-long-run');
+
+    // Handle case where we're before plan starts or after plan ends
+    if (currentWeek < 1) {
+        weekNumEl.textContent = 'Not Started';
+        weekDatesEl.textContent = 'Training begins Jan 5, 2026';
+        phaseBadgeEl.textContent = 'Upcoming';
+        phaseBadgeEl.className = 'phase-badge';
+        plannedParkrunEl.textContent = '-';
+        plannedLongRunEl.textContent = '-';
+        return;
+    }
+
+    if (currentWeek > 44) {
+        weekNumEl.textContent = 'Complete!';
+        weekDatesEl.textContent = 'Training plan finished';
+        phaseBadgeEl.textContent = 'Done';
+        phaseBadgeEl.className = 'phase-badge';
+        plannedParkrunEl.textContent = '-';
+        plannedLongRunEl.textContent = '-';
+        return;
+    }
+
+    // Get week plan
+    const weekPlan = getWeekPlan(currentWeek);
+
+    weekNumEl.textContent = currentWeek;
+    weekDatesEl.textContent = weekPlan.dateRange.formatted;
+
+    // Set phase badge
+    phaseBadgeEl.textContent = `Phase ${weekPlan.phase.id}`;
+    phaseBadgeEl.className = `phase-badge phase-${weekPlan.phase.id}`;
+
+    // Show planned runs
+    plannedParkrunEl.textContent = `${weekPlan.parkrun} km`;
+    plannedLongRunEl.textContent = `${weekPlan.longRun} km`;
+
+    // Add recovery badge if it's a recovery week
+    if (weekPlan.isRecovery) {
+        const recoveryBadge = document.createElement('span');
+        recoveryBadge.className = 'badge badge-recovery';
+        recoveryBadge.textContent = 'Recovery Week';
+        recoveryBadge.style.marginLeft = 'var(--spacing-sm)';
+        phaseBadgeEl.after(recoveryBadge);
+    }
+}
+
+/**
+ * Update weight progress card
+ */
+function updateWeightProgress() {
+    const currentWeight = getCurrentWeight();
+    const weightLost = getWeightLost();
+    const progress = getWeightProgress();
+
+    document.getElementById('current-weight').textContent = `${currentWeight.toFixed(1)} kg`;
+    document.getElementById('weight-lost').textContent = `${weightLost.toFixed(1)} kg`;
+
+    const progressBar = document.getElementById('weight-progress');
+    progressBar.style.width = `${progress}%`;
+}
+
+/**
+ * Update next milestone card
+ */
+function updateNextMilestone() {
+    const settings = getSettings();
+    const today = getTodayISO();
+    const currentWeek = getCurrentWeek(today, settings.trainingPlanStart);
+
+    const nextMilestone = getNextMilestone(currentWeek);
+
+    const milestoneNameEl = document.getElementById('milestone-name');
+    const milestoneDistanceEl = document.getElementById('milestone-distance');
+    const milestoneWeekEl = document.getElementById('milestone-week');
+    const milestoneCountdownEl = document.getElementById('milestone-countdown');
+
+    if (!nextMilestone || currentWeek > 44) {
+        milestoneNameEl.textContent = 'All Done!';
+        milestoneDistanceEl.textContent = '🎉';
+        milestoneWeekEl.textContent = 'Completed';
+        milestoneCountdownEl.textContent = 'Congratulations on finishing your training!';
+        return;
+    }
+
+    milestoneNameEl.textContent = nextMilestone.name;
+    milestoneDistanceEl.textContent = `${nextMilestone.distance} km`;
+    milestoneWeekEl.textContent = `Week ${nextMilestone.week}`;
+
+    const weeksUntil = nextMilestone.week - currentWeek;
+    if (weeksUntil === 0) {
+        milestoneCountdownEl.textContent = 'This week!';
+    } else if (weeksUntil === 1) {
+        milestoneCountdownEl.textContent = 'Next week!';
+    } else {
+        milestoneCountdownEl.textContent = `${weeksUntil} weeks to go`;
+    }
+}
+
+/**
+ * Update this week's summary
+ */
+function updateWeekSummary() {
+    const settings = getSettings();
+    const today = getTodayISO();
+    const currentWeek = getCurrentWeek(today, settings.trainingPlanStart);
+
+    const runs = getRunsForWeek(currentWeek);
+
+    // Calculate totals
+    const totalDistance = runs.reduce((sum, run) => sum + run.distance, 0);
+    const runCount = runs.length;
+
+    // Count gym and bodyweight sessions
+    const gymSessions = runs.filter(run => run.gym).length;
+    const bodyweightSessions = runs.filter(run => run.bodyweight).length;
+
+    // Update display
+    document.getElementById('week-distance').textContent = `${totalDistance.toFixed(1)} km`;
+    document.getElementById('week-runs').textContent = runCount;
+    document.getElementById('week-gym').textContent = gymSessions > 0 ? `✓ (${gymSessions})` : '-';
+    document.getElementById('week-bodyweight').textContent = bodyweightSessions > 0 ? `✓ (${bodyweightSessions})` : '-';
+}
+
+/**
+ * Update recent runs list
+ */
+function updateRecentRuns() {
+    const runs = getRuns().slice(0, 5); // Get 5 most recent
+    const container = document.getElementById('recent-runs');
+
+    if (runs.length === 0) {
+        container.innerHTML = '<p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>';
+        return;
+    }
+
+    container.innerHTML = runs.map(run => createRunCard(run)).join('');
+
+    // Add event listeners to edit buttons
+    container.querySelectorAll('.btn-edit-run').forEach(button => {
+        button.addEventListener('click', handleEditRun);
+    });
+
+    // Add event listeners to delete buttons
+    container.querySelectorAll('.btn-delete-run').forEach(button => {
+        button.addEventListener('click', handleDeleteRun);
+    });
+}
+
+/**
+ * Create HTML for a run card
+ * @param {Object} run - Run object
+ * @returns {string} HTML string
+ */
+function createRunCard(run) {
+    const runTypeColors = {
+        parkrun: '#2563eb',
+        long: '#ec4899',
+        easy: '#10b981',
+        tempo: '#f59e0b',
+        intervals: '#ef4444',
+        recovery: '#8b5cf6'
+    };
+
+    const typeColor = runTypeColors[run.type] || '#6b7280';
+
+    // Escape HTML in notes to prevent XSS
+    const safeNotes = run.notes ? run.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
+    return `
+        <div class="run-item" data-run-id="${run.id}">
+            <div class="run-item-main">
+                <div class="run-item-header">
+                    <span class="run-type-badge ${run.type}" style="background-color: ${typeColor}20; color: ${typeColor};">
+                        ${run.type}
+                    </span>
+                    <span class="run-date">${formatDate(run.date)}</span>
+                </div>
+                <div class="run-stats">
+                    <div class="run-stat">
+                        <span class="run-stat-label">Distance</span>
+                        <span class="run-stat-value">${run.distance.toFixed(2)} km</span>
+                    </div>
+                    <div class="run-stat">
+                        <span class="run-stat-label">Time</span>
+                        <span class="run-stat-value">${formatDuration(run.time)}</span>
+                    </div>
+                    <div class="run-stat">
+                        <span class="run-stat-label">Pace</span>
+                        <span class="run-stat-value">${formatPace(run.pace)}</span>
+                    </div>
+                </div>
+                ${safeNotes ? `<div class="run-notes" style="margin-top: var(--spacing-sm); color: var(--text-secondary); font-size: var(--font-size-sm);">${safeNotes}</div>` : ''}
+                ${run.gym || run.bodyweight ? `
+                    <div style="margin-top: var(--spacing-sm); font-size: var(--font-size-sm); color: var(--text-secondary);">
+                        ${run.gym ? '<span style="margin-right: var(--spacing-sm);">💪 Gym</span>' : ''}
+                        ${run.bodyweight ? '<span>🏋️ Bodyweight</span>' : ''}
+                    </div>
+                ` : ''}
+            </div>
+            <div class="run-item-actions" style="margin-top: var(--spacing-sm); display: flex; gap: var(--spacing-sm);">
+                <button class="btn-edit-run" data-run-id="${run.id}" style="flex: 1; padding: var(--spacing-sm); border: 1px solid var(--border-color); background: white; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-sm);">Edit</button>
+                <button class="btn-delete-run" data-run-id="${run.id}" style="flex: 1; padding: var(--spacing-sm); border: 1px solid var(--danger-color); background: white; color: var(--danger-color); border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-sm);">Delete</button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Handle edit run button click
+ * @param {Event} event - Click event
+ */
+function handleEditRun(event) {
+    const runId = event.target.dataset.runId;
+    const run = getRun(runId);
+
+    if (!run) {
+        alert('Run not found');
+        return;
+    }
+
+    // Store the run ID in localStorage for the log-run form to pick up
+    localStorage.setItem('editingRunId', runId);
+
+    // Navigate to log-run page
+    window.location.hash = 'log-run';
+}
+
+/**
+ * Handle delete run button click
+ * @param {Event} event - Click event
+ */
+function handleDeleteRun(event) {
+    const runId = event.target.dataset.runId;
+    const run = getRun(runId);
+
+    if (!run) {
+        alert('Run not found');
+        return;
+    }
+
+    // Confirm deletion
+    const confirmed = confirm(
+        `Are you sure you want to delete this run?\n\n` +
+        `Date: ${formatDate(run.date)}\n` +
+        `Distance: ${run.distance.toFixed(2)} km\n` +
+        `Time: ${formatDuration(run.time)}\n\n` +
+        `This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    // Delete the run
+    const success = deleteRun(runId);
+
+    if (success) {
+        // Refresh the dashboard
+        updateDashboard();
+    } else {
+        alert('Failed to delete run. Please try again.');
+    }
+}
+
+/**
+ * Set up data management (export/import) functionality
+ */
+function setupDataManagement() {
+    const exportButton = document.getElementById('btn-export-data');
+    const importButton = document.getElementById('btn-import-data');
+    const fileInput = document.getElementById('import-file-input');
+
+    // Remove old listeners to prevent memory leaks
+    exportButton.removeEventListener('click', handleExportData);
+    importButton.removeEventListener('click', handleImportButtonClick);
+    fileInput.removeEventListener('change', handleFileSelected);
+
+    // Add event listeners
+    exportButton.addEventListener('click', handleExportData);
+    importButton.addEventListener('click', handleImportButtonClick);
+    fileInput.addEventListener('change', handleFileSelected);
+}
+
+/**
+ * Handle export data button click
+ */
+function handleExportData() {
+    try {
+        // Get the data as JSON string
+        const jsonData = exportData();
+
+        // Create a blob and download link
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `running-dashboard-backup-${getTodayISO()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Show success message
+        showImportStatus('Data exported successfully!', 'success');
+    } catch (error) {
+        console.error('Export error:', error);
+        showImportStatus('Failed to export data. Please try again.', 'error');
+    }
+}
+
+/**
+ * Handle import button click (trigger file picker)
+ */
+function handleImportButtonClick() {
+    const fileInput = document.getElementById('import-file-input');
+    fileInput.click();
+}
+
+/**
+ * Handle file selected for import
+ * @param {Event} event - Change event
+ */
+function handleFileSelected(event) {
+    const file = event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    // Confirm before importing
+    const confirmed = confirm(
+        'Importing data will REPLACE all your current data.\n\n' +
+        'Make sure you have exported your current data first!\n\n' +
+        'Do you want to continue?'
+    );
+
+    if (!confirmed) {
+        // Reset file input
+        event.target.value = '';
+        return;
+    }
+
+    // Read the file
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        try {
+            const jsonString = e.target.result;
+            const success = importData(jsonString);
+
+            if (success) {
+                showImportStatus('Data imported successfully! Refreshing...', 'success');
+
+                // Refresh the page after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showImportStatus('Failed to import data. Invalid file format.', 'error');
+            }
+        } catch (error) {
+            console.error('Import error:', error);
+            showImportStatus('Failed to import data. Please check the file.', 'error');
+        }
+
+        // Reset file input
+        event.target.value = '';
+    };
+
+    reader.onerror = () => {
+        showImportStatus('Failed to read file. Please try again.', 'error');
+        event.target.value = '';
+    };
+
+    reader.readAsText(file);
+}
+
+/**
+ * Show import/export status message
+ * @param {string} message - Status message
+ * @param {string} type - 'success' or 'error'
+ */
+function showImportStatus(message, type) {
+    const statusEl = document.getElementById('import-status');
+    statusEl.textContent = message;
+    statusEl.style.color = type === 'success' ? 'var(--secondary-color)' : 'var(--danger-color)';
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        statusEl.textContent = '';
+    }, 5000);
+}

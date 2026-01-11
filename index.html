@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Running Training Dashboard</title>
+    <meta name="description" content="Half Marathon Training Tracker - Track your running progress toward your 2026 half marathon goal">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <!-- Main Navigation -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <h1 class="app-title">Running Dashboard</h1>
+            <ul class="nav-links">
+                <li><a href="#dashboard" class="nav-link active" data-page="dashboard">Dashboard</a></li>
+                <li><a href="#training-plan" class="nav-link" data-page="training-plan">Training Plan</a></li>
+                <li><a href="#log-run" class="nav-link" data-page="log-run">Log Run</a></li>
+                <li><a href="#progress" class="nav-link" data-page="progress">Progress</a></li>
+                <li><a href="#weight" class="nav-link" data-page="weight">Weight</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="page-section active">
+            <div class="section-header">
+                <h2>Dashboard</h2>
+                <p class="section-subtitle">Your training at a glance</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Current Week Card -->
+                <div class="card current-week-card">
+                    <h3>Current Week</h3>
+                    <div id="current-week-info">
+                        <div class="week-number">Week <span id="week-num">-</span></div>
+                        <div class="week-dates" id="week-dates">-</div>
+                        <div class="phase-badge" id="phase-badge">-</div>
+                        <div class="planned-runs">
+                            <div class="planned-run">
+                                <span class="run-label">Parkrun:</span>
+                                <span id="planned-parkrun">5 km</span>
+                            </div>
+                            <div class="planned-run">
+                                <span class="run-label">Long Run:</span>
+                                <span id="planned-long-run">- km</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weight Progress Card -->
+                <div class="card weight-progress-card">
+                    <h3>Weight Progress</h3>
+                    <div id="weight-summary">
+                        <div class="weight-stat">
+                            <span class="stat-label">Current:</span>
+                            <span class="stat-value" id="current-weight">74.5 kg</span>
+                        </div>
+                        <div class="weight-stat">
+                            <span class="stat-label">Goal:</span>
+                            <span class="stat-value">65 kg</span>
+                        </div>
+                        <div class="weight-stat">
+                            <span class="stat-label">Lost:</span>
+                            <span class="stat-value" id="weight-lost">0 kg</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="weight-progress"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Milestone Card -->
+                <div class="card milestone-card">
+                    <h3>Next Milestone</h3>
+                    <div id="next-milestone">
+                        <div class="milestone-name" id="milestone-name">First 10K</div>
+                        <div class="milestone-distance" id="milestone-distance">10 km</div>
+                        <div class="milestone-target">Target: <span id="milestone-week">Week 9</span></div>
+                        <div class="milestone-countdown" id="milestone-countdown">-</div>
+                    </div>
+                </div>
+
+                <!-- This Week Summary -->
+                <div class="card week-summary-card">
+                    <h3>This Week's Summary</h3>
+                    <div id="week-summary">
+                        <div class="summary-stat">
+                            <span class="stat-label">Distance:</span>
+                            <span class="stat-value" id="week-distance">0 km</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="stat-label">Runs:</span>
+                            <span class="stat-value" id="week-runs">0</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="stat-label">Gym:</span>
+                            <span class="stat-value" id="week-gym">-</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="stat-label">Bodyweight:</span>
+                            <span class="stat-value" id="week-bodyweight">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Runs -->
+                <div class="card recent-runs-card full-width">
+                    <h3>Recent Runs</h3>
+                    <div id="recent-runs">
+                        <p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>
+                    </div>
+                </div>
+
+                <!-- Data Management -->
+                <div class="card data-management-card full-width">
+                    <h3>Data Management</h3>
+                    <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                        Backup your training data or import from a previous backup.
+                    </p>
+                    <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+                        <button id="btn-export-data" class="btn btn-primary" style="flex: 1; min-width: 150px;">
+                            Export Data (JSON)
+                        </button>
+                        <button id="btn-import-data" class="btn" style="flex: 1; min-width: 150px; background: white; border: 1px solid var(--border-color); color: var(--text-primary);">
+                            Import Data (JSON)
+                        </button>
+                    </div>
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                    <div id="import-status" style="margin-top: var(--spacing-sm); font-size: var(--font-size-sm);"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Training Plan Section -->
+        <section id="training-plan" class="page-section">
+            <div class="section-header">
+                <h2>Training Plan</h2>
+                <p class="section-subtitle">44-week journey to your half marathon</p>
+            </div>
+
+            <div class="training-plan-container">
+                <div id="training-plan-grid">
+                    <!-- Will be populated by JavaScript -->
+                    <p class="loading-state">Loading training plan...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Log Run Section -->
+        <section id="log-run" class="page-section">
+            <div class="section-header">
+                <h2>Log a Run</h2>
+                <p class="section-subtitle">Record your training session</p>
+            </div>
+
+            <div class="form-container">
+                <form id="log-run-form" class="card">
+                    <div class="form-group">
+                        <label for="run-date">Date</label>
+                        <input type="date" id="run-date" name="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="run-type">Run Type</label>
+                        <select id="run-type" name="type" required>
+                            <option value="parkrun">Parkrun</option>
+                            <option value="long">Long Run</option>
+                            <option value="easy">Easy Run</option>
+                            <option value="tempo">Tempo Run</option>
+                            <option value="intervals">Intervals</option>
+                            <option value="recovery">Recovery Run</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="run-distance">Distance (km)</label>
+                            <input type="number" id="run-distance" name="distance" min="0.01" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="run-time">Time (HH:MM:SS or MM:SS)</label>
+                            <input type="text" id="run-time" name="time" placeholder="30:00 or 1:30:00" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group pace-display">
+                        <label>Pace</label>
+                        <div class="pace-value" id="calculated-pace">-</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="run-notes">Notes (optional)</label>
+                        <textarea id="run-notes" name="notes" rows="3" placeholder="How did you feel? Weather conditions? Anything notable about this run?"></textarea>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="gym-session" name="gym">
+                            Gym session completed this week
+                        </label>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="bodyweight-session" name="bodyweight">
+                            Bodyweight exercises completed
+                        </label>
+                    </div>
+
+                    <div id="form-errors" class="error-messages"></div>
+                    <div id="form-success" class="success-message"></div>
+
+                    <button type="submit" class="btn btn-primary">Log Run</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Progress Section -->
+        <section id="progress" class="page-section">
+            <div class="section-header">
+                <h2>Progress</h2>
+                <p class="section-subtitle">Track your training journey</p>
+            </div>
+
+            <div class="progress-container">
+                <!-- Statistics Cards -->
+                <div class="stats-grid">
+                    <div class="card stat-card">
+                        <div class="stat-label">Total Distance</div>
+                        <div class="stat-value" id="total-distance">0 km</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-label">Total Time</div>
+                        <div class="stat-value" id="total-time">0:00:00</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-label">Average Pace</div>
+                        <div class="stat-value" id="avg-pace">-</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-label">Longest Run</div>
+                        <div class="stat-value" id="longest-run">0 km</div>
+                    </div>
+                </div>
+
+                <!-- Weekly Mileage Chart -->
+                <div class="card chart-card">
+                    <h3>Weekly Mileage</h3>
+                    <div class="chart-container">
+                        <canvas id="weekly-mileage-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Weight Section -->
+        <section id="weight" class="page-section">
+            <div class="section-header">
+                <h2>Weight Tracking</h2>
+                <p class="section-subtitle">Monitor your progress to 65kg</p>
+            </div>
+
+            <div class="weight-container">
+                <!-- Weight Entry Form -->
+                <div class="card form-card">
+                    <h3>Log Weight</h3>
+                    <form id="log-weight-form">
+                        <div class="form-group">
+                            <label for="weight-date">Date</label>
+                            <input type="date" id="weight-date" name="date" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="weight-value">Weight (kg)</label>
+                            <input type="number" id="weight-value" name="weight" min="40" max="150" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="weight-note">Note (optional)</label>
+                            <input type="text" id="weight-note" name="note" placeholder="Morning weigh-in, after run, etc.">
+                        </div>
+
+                        <div id="weight-form-errors" class="error-messages"></div>
+                        <div id="weight-form-success" class="success-message"></div>
+
+                        <button type="submit" class="btn btn-primary">Log Weight</button>
+                    </form>
+                </div>
+
+                <!-- Weight Chart -->
+                <div class="card chart-card">
+                    <h3>Weight Trend</h3>
+                    <div class="chart-container">
+                        <canvas id="weight-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Application JavaScript (ES6 Modules) -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
