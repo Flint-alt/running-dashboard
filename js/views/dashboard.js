@@ -14,6 +14,7 @@ import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
 export function initDashboard() {
     updateDashboard();
     setupDataManagement();
+    setupRecentRunsEventDelegation();
 }
 
 /**
@@ -76,6 +77,12 @@ function updateCurrentWeek() {
     // Show planned runs
     plannedParkrunEl.textContent = `${weekPlan.parkrun} km`;
     plannedLongRunEl.textContent = `${weekPlan.longRun} km`;
+
+    // Remove any existing recovery badge first to prevent duplicates
+    const existingRecoveryBadge = phaseBadgeEl.parentElement.querySelector('.badge-recovery');
+    if (existingRecoveryBadge) {
+        existingRecoveryBadge.remove();
+    }
 
     // Add recovery badge if it's a recovery week
     if (weekPlan.isRecovery) {
@@ -177,16 +184,39 @@ function updateRecentRuns() {
     }
 
     container.innerHTML = runs.map(run => createRunCard(run)).join('');
+    // Event listeners now handled by event delegation in setupRecentRunsEventDelegation()
+}
 
-    // Add event listeners to edit buttons
-    container.querySelectorAll('.btn-edit-run').forEach(button => {
-        button.addEventListener('click', handleEditRun);
-    });
+/**
+ * Set up event delegation for recent runs edit/delete buttons
+ * Uses a single listener on the container instead of individual listeners per button
+ */
+function setupRecentRunsEventDelegation() {
+    const container = document.getElementById('recent-runs');
 
-    // Add event listeners to delete buttons
-    container.querySelectorAll('.btn-delete-run').forEach(button => {
-        button.addEventListener('click', handleDeleteRun);
-    });
+    // Remove any existing listener to prevent duplicates
+    container.removeEventListener('click', handleRecentRunsClick);
+
+    // Add single delegated listener
+    container.addEventListener('click', handleRecentRunsClick);
+}
+
+/**
+ * Handle clicks on recent runs container (event delegation)
+ * @param {Event} event - Click event
+ */
+function handleRecentRunsClick(event) {
+    const target = event.target;
+
+    // Check if edit button was clicked
+    if (target.classList.contains('btn-edit-run')) {
+        handleEditRun(event);
+    }
+
+    // Check if delete button was clicked
+    if (target.classList.contains('btn-delete-run')) {
+        handleDeleteRun(event);
+    }
 }
 
 /**

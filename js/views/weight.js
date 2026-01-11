@@ -27,8 +27,10 @@ function setupForm() {
     const form = document.getElementById('log-weight-form');
     const dateInput = document.getElementById('weight-date');
 
-    // Set default date to today
-    dateInput.value = getTodayISO();
+    // Set default date to today only if field is empty (preserve user's selection)
+    if (!dateInput.value) {
+        dateInput.value = getTodayISO();
+    }
 
     // Remove old event listener to prevent memory leaks
     form.removeEventListener('submit', handleWeightSubmit);

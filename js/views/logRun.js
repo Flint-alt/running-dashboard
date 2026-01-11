@@ -273,11 +273,12 @@ function validateFormData(formData) {
         // Check for unrealistic pace
         if (formData.distance > 0 && timeSeconds > 0) {
             const pace = calculatePace(formData.distance, timeSeconds);
-            if (pace < 120) { // Faster than 2:00/km
-                errors.push('Pace seems unrealistically fast. Please check distance and time.');
+            // Allow 2:30/km (150s) for interval work, up to 15:00/km (900s) for recovery/walking
+            if (pace < 150) { // Faster than 2:30/km - elite interval pace
+                errors.push('Pace seems unrealistically fast (< 2:30/km). Please check distance and time.');
             }
-            if (pace > 1200) { // Slower than 20:00/km
-                errors.push('Pace seems unrealistically slow. Please check distance and time.');
+            if (pace > 900) { // Slower than 15:00/km - very slow walking pace
+                errors.push('Pace seems unrealistically slow (> 15:00/km). Please check distance and time.');
             }
         }
     }
