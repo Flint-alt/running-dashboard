@@ -98,6 +98,19 @@ function handleWeightSubmit(event) {
  */
 function renderWeightChart() {
     const canvas = document.getElementById('weight-chart');
+    const emptyStateId = 'weight-chart-empty-state';
+    const emptyStateMessage = 'No weight data yet. Log your first weight entry above!';
+    const emptyState = canvas ? canvas.parentElement.querySelector(`#${emptyStateId}`) : null;
+
+    if (!canvas) {
+        console.warn('Weight chart canvas not found.');
+        return;
+    }
+
+    if (emptyState) {
+        emptyState.remove();
+    }
+
     const ctx = canvas.getContext('2d');
 
     // Destroy existing chart
@@ -109,10 +122,17 @@ function renderWeightChart() {
     const settings = getSettings();
 
     if (weights.length === 0) {
-        // Show empty state
-        canvas.parentElement.innerHTML = '<p class="empty-state">No weight data yet. Log your first weight entry above!</p>';
+        // Show empty state without removing the canvas
+        const message = document.createElement('p');
+        message.id = emptyStateId;
+        message.className = 'empty-state';
+        message.textContent = emptyStateMessage;
+        canvas.parentElement.appendChild(message);
+        canvas.style.display = 'none';
         return;
     }
+
+    canvas.style.display = '';
 
     // Prepare data
     const labels = weights.map(w => formatDate(w.date, 'short'));
