@@ -100,15 +100,21 @@ function renderWeightChart() {
     const canvas = document.getElementById('weight-chart');
     const emptyStateId = 'weight-chart-empty-state';
     const emptyStateMessage = 'No weight data yet. Log your first weight entry above!';
+    const chartErrorId = 'weight-chart-error';
     const emptyState = canvas ? canvas.parentElement.querySelector(`#${emptyStateId}`) : null;
+    const chartError = canvas ? canvas.parentElement.querySelector(`#${chartErrorId}`) : null;
 
     if (!canvas) {
         console.warn('Weight chart canvas not found.');
         return;
     }
 
+    // Clean up any previous messages
     if (emptyState) {
         emptyState.remove();
+    }
+    if (chartError) {
+        chartError.remove();
     }
 
     const ctx = canvas.getContext('2d');
@@ -217,7 +223,13 @@ function renderWeightChart() {
             }
         });
     } else {
-        canvas.parentElement.innerHTML = '<p class="empty-state">Chart.js not loaded. Please refresh the page.</p>';
+        // Show error without removing the canvas
+        const errorMessage = document.createElement('p');
+        errorMessage.id = chartErrorId;
+        errorMessage.className = 'empty-state';
+        errorMessage.textContent = 'Chart.js not loaded. Please refresh the page.';
+        canvas.parentElement.appendChild(errorMessage);
+        canvas.style.display = 'none';
     }
 }
 

@@ -36,6 +36,14 @@ function updateStatistics() {
  */
 function renderWeeklyMileageChart() {
     const canvas = document.getElementById('weekly-mileage-chart');
+    const chartErrorId = 'progress-chart-error';
+    const chartError = canvas ? canvas.parentElement.querySelector(`#${chartErrorId}`) : null;
+
+    // Clean up any previous error messages
+    if (chartError) {
+        chartError.remove();
+    }
+
     const ctx = canvas.getContext('2d');
 
     // Destroy existing chart if it exists
@@ -67,6 +75,9 @@ function renderWeeklyMileageChart() {
         const phaseColor = getPhaseColor(weekPlan.phase.id);
         phaseColors.push(phaseColor);
     }
+
+    // Ensure canvas is visible
+    canvas.style.display = '';
 
     // Create chart using Chart.js
     if (typeof Chart !== 'undefined') {
@@ -122,8 +133,13 @@ function renderWeeklyMileageChart() {
             }
         });
     } else {
-        // Fallback if Chart.js not loaded
-        canvas.parentElement.innerHTML = '<p class="empty-state">Chart.js not loaded. Please refresh the page.</p>';
+        // Fallback if Chart.js not loaded - show error without destroying canvas
+        const errorMessage = document.createElement('p');
+        errorMessage.id = chartErrorId;
+        errorMessage.className = 'empty-state';
+        errorMessage.textContent = 'Chart.js not loaded. Please refresh the page.';
+        canvas.parentElement.appendChild(errorMessage);
+        canvas.style.display = 'none';
     }
 }
 
