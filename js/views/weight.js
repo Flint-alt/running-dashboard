@@ -98,6 +98,40 @@ function handleWeightSubmit(event) {
  */
 function renderWeightChart() {
     const canvas = document.getElementById('weight-chart');
+    const emptyStateId = 'weight-chart-empty-state';
+    const emptyStateMessage = 'No weight data yet. Log your first weight entry above!';
+
+    if (!canvas) {
+        console.warn('Weight chart canvas not found.');
+        return;
+    }
+
+    const chartContainer = canvas.parentElement;
+
+    const showEmptyState = (message) => {
+        let emptyState = chartContainer.querySelector(`#${emptyStateId}`);
+
+        if (!emptyState) {
+            emptyState = document.createElement('p');
+            emptyState.id = emptyStateId;
+            emptyState.className = 'empty-state';
+            chartContainer.appendChild(emptyState);
+        }
+
+        emptyState.textContent = message;
+        canvas.style.display = 'none';
+    };
+
+    const clearEmptyState = () => {
+        const emptyState = chartContainer.querySelector(`#${emptyStateId}`);
+        if (emptyState) {
+            emptyState.remove();
+        }
+        canvas.style.display = '';
+    };
+
+    clearEmptyState();
+
     const ctx = canvas.getContext('2d');
 
     // Destroy existing chart
@@ -109,8 +143,7 @@ function renderWeightChart() {
     const settings = getSettings();
 
     if (weights.length === 0) {
-        // Show empty state
-        canvas.parentElement.innerHTML = '<p class="empty-state">No weight data yet. Log your first weight entry above!</p>';
+        showEmptyState(emptyStateMessage);
         return;
     }
 
@@ -197,7 +230,7 @@ function renderWeightChart() {
             }
         });
     } else {
-        canvas.parentElement.innerHTML = '<p class="empty-state">Chart.js not loaded. Please refresh the page.</p>';
+        showEmptyState('Chart.js not loaded. Please refresh the page.');
     }
 }
 
