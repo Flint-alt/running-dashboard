@@ -179,11 +179,19 @@ function updateRecentRuns() {
     const container = document.getElementById('recent-runs');
 
     if (runs.length === 0) {
-        container.innerHTML = '<p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>';
+        container.replaceChildren();
+        const emptyState = document.createElement('p');
+        emptyState.className = 'empty-state';
+        emptyState.textContent = 'No runs logged yet. ';
+        const emptyStateLink = document.createElement('a');
+        emptyStateLink.href = '#log-run';
+        emptyStateLink.textContent = 'Log your first run!';
+        emptyState.appendChild(emptyStateLink);
+        container.appendChild(emptyState);
         return;
     }
 
-    container.innerHTML = runs.map(run => createRunCard(run)).join('');
+    container.replaceChildren(...runs.map(run => createRunCard(run)));
     // Event listeners now handled by event delegation in setupRecentRunsEventDelegation()
 }
 
@@ -222,7 +230,7 @@ function handleRecentRunsClick(event) {
 /**
  * Create HTML for a run card
  * @param {Object} run - Run object
- * @returns {string} HTML string
+ * @returns {HTMLElement} Run card element
  */
 function createRunCard(run) {
     const runTypeColors = {
@@ -233,49 +241,150 @@ function createRunCard(run) {
         intervals: '#ef4444',
         recovery: '#8b5cf6'
     };
+    const allowedRunTypes = new Set(Object.keys(runTypeColors));
+    const normalizedRunType = allowedRunTypes.has(run.type) ? run.type : 'unknown';
 
-    const typeColor = runTypeColors[run.type] || '#6b7280';
+    const typeColor = runTypeColors[normalizedRunType] || '#6b7280';
 
-    // Escape HTML in notes to prevent XSS
-    const safeNotes = run.notes ? run.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+    const runItem = document.createElement('div');
+    runItem.className = 'run-item';
+    runItem.dataset.runId = run.id;
 
-    return `
-        <div class="run-item" data-run-id="${run.id}">
-            <div class="run-item-main">
-                <div class="run-item-header">
-                    <span class="run-type-badge ${run.type}" style="background-color: ${typeColor}20; color: ${typeColor};">
-                        ${run.type}
-                    </span>
-                    <span class="run-date">${formatDate(run.date)}</span>
-                </div>
-                <div class="run-stats">
-                    <div class="run-stat">
-                        <span class="run-stat-label">Distance</span>
-                        <span class="run-stat-value">${run.distance.toFixed(2)} km</span>
-                    </div>
-                    <div class="run-stat">
-                        <span class="run-stat-label">Time</span>
-                        <span class="run-stat-value">${formatDuration(run.time)}</span>
-                    </div>
-                    <div class="run-stat">
-                        <span class="run-stat-label">Pace</span>
-                        <span class="run-stat-value">${formatPace(run.pace)}</span>
-                    </div>
-                </div>
-                ${safeNotes ? `<div class="run-notes" style="margin-top: var(--spacing-sm); color: var(--text-secondary); font-size: var(--font-size-sm);">${safeNotes}</div>` : ''}
-                ${run.gym || run.bodyweight ? `
-                    <div style="margin-top: var(--spacing-sm); font-size: var(--font-size-sm); color: var(--text-secondary);">
-                        ${run.gym ? '<span style="margin-right: var(--spacing-sm);">💪 Gym</span>' : ''}
-                        ${run.bodyweight ? '<span>🏋️ Bodyweight</span>' : ''}
-                    </div>
-                ` : ''}
-            </div>
-            <div class="run-item-actions" style="margin-top: var(--spacing-sm); display: flex; gap: var(--spacing-sm);">
-                <button class="btn-edit-run" data-run-id="${run.id}" style="flex: 1; padding: var(--spacing-sm); border: 1px solid var(--border-color); background: white; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-sm);">Edit</button>
-                <button class="btn-delete-run" data-run-id="${run.id}" style="flex: 1; padding: var(--spacing-sm); border: 1px solid var(--danger-color); background: white; color: var(--danger-color); border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-sm);">Delete</button>
-            </div>
-        </div>
-    `;
+    const runItemMain = document.createElement('div');
+    runItemMain.className = 'run-item-main';
+
+    const runItemHeader = document.createElement('div');
+    runItemHeader.className = 'run-item-header';
+
+    const runTypeBadge = document.createElement('span');
+    runTypeBadge.classList.add('run-type-badge');
+    if (normalizedRunType !== 'unknown') {
+        runTypeBadge.classList.add(normalizedRunType);
+    }
+    runTypeBadge.style.backgroundColor = `${typeColor}20`;
+    runTypeBadge.style.color = typeColor;
+    runTypeBadge.textContent = run.type;
+
+    const runDate = document.createElement('span');
+    runDate.className = 'run-date';
+    runDate.textContent = formatDate(run.date);
+
+    runItemHeader.appendChild(runTypeBadge);
+    runItemHeader.appendChild(runDate);
+
+    const runStats = document.createElement('div');
+    runStats.className = 'run-stats';
+
+    const distanceStat = document.createElement('div');
+    distanceStat.className = 'run-stat';
+    const distanceLabel = document.createElement('span');
+    distanceLabel.className = 'run-stat-label';
+    distanceLabel.textContent = 'Distance';
+    const distanceValue = document.createElement('span');
+    distanceValue.className = 'run-stat-value';
+    distanceValue.textContent = `${run.distance.toFixed(2)} km`;
+    distanceStat.appendChild(distanceLabel);
+    distanceStat.appendChild(distanceValue);
+
+    const timeStat = document.createElement('div');
+    timeStat.className = 'run-stat';
+    const timeLabel = document.createElement('span');
+    timeLabel.className = 'run-stat-label';
+    timeLabel.textContent = 'Time';
+    const timeValue = document.createElement('span');
+    timeValue.className = 'run-stat-value';
+    timeValue.textContent = formatDuration(run.time);
+    timeStat.appendChild(timeLabel);
+    timeStat.appendChild(timeValue);
+
+    const paceStat = document.createElement('div');
+    paceStat.className = 'run-stat';
+    const paceLabel = document.createElement('span');
+    paceLabel.className = 'run-stat-label';
+    paceLabel.textContent = 'Pace';
+    const paceValue = document.createElement('span');
+    paceValue.className = 'run-stat-value';
+    paceValue.textContent = formatPace(run.pace);
+    paceStat.appendChild(paceLabel);
+    paceStat.appendChild(paceValue);
+
+    runStats.appendChild(distanceStat);
+    runStats.appendChild(timeStat);
+    runStats.appendChild(paceStat);
+
+    runItemMain.appendChild(runItemHeader);
+    runItemMain.appendChild(runStats);
+
+    if (run.notes) {
+        const runNotes = document.createElement('div');
+        runNotes.className = 'run-notes';
+        runNotes.style.marginTop = 'var(--spacing-sm)';
+        runNotes.style.color = 'var(--text-secondary)';
+        runNotes.style.fontSize = 'var(--font-size-sm)';
+        runNotes.textContent = run.notes;
+        runItemMain.appendChild(runNotes);
+    }
+
+    if (run.gym || run.bodyweight) {
+        const accessories = document.createElement('div');
+        accessories.style.marginTop = 'var(--spacing-sm)';
+        accessories.style.fontSize = 'var(--font-size-sm)';
+        accessories.style.color = 'var(--text-secondary)';
+
+        if (run.gym) {
+            const gymSpan = document.createElement('span');
+            gymSpan.style.marginRight = 'var(--spacing-sm)';
+            gymSpan.textContent = '💪 Gym';
+            accessories.appendChild(gymSpan);
+        }
+
+        if (run.bodyweight) {
+            const bodyweightSpan = document.createElement('span');
+            bodyweightSpan.textContent = '🏋️ Bodyweight';
+            accessories.appendChild(bodyweightSpan);
+        }
+
+        runItemMain.appendChild(accessories);
+    }
+
+    const runItemActions = document.createElement('div');
+    runItemActions.className = 'run-item-actions';
+    runItemActions.style.marginTop = 'var(--spacing-sm)';
+    runItemActions.style.display = 'flex';
+    runItemActions.style.gap = 'var(--spacing-sm)';
+
+    const editButton = document.createElement('button');
+    editButton.className = 'btn-edit-run';
+    editButton.dataset.runId = run.id;
+    editButton.style.flex = '1';
+    editButton.style.padding = 'var(--spacing-sm)';
+    editButton.style.border = '1px solid var(--border-color)';
+    editButton.style.background = 'white';
+    editButton.style.borderRadius = 'var(--radius-sm)';
+    editButton.style.cursor = 'pointer';
+    editButton.style.fontSize = 'var(--font-size-sm)';
+    editButton.textContent = 'Edit';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'btn-delete-run';
+    deleteButton.dataset.runId = run.id;
+    deleteButton.style.flex = '1';
+    deleteButton.style.padding = 'var(--spacing-sm)';
+    deleteButton.style.border = '1px solid var(--danger-color)';
+    deleteButton.style.background = 'white';
+    deleteButton.style.color = 'var(--danger-color)';
+    deleteButton.style.borderRadius = 'var(--radius-sm)';
+    deleteButton.style.cursor = 'pointer';
+    deleteButton.style.fontSize = 'var(--font-size-sm)';
+    deleteButton.textContent = 'Delete';
+
+    runItemActions.appendChild(editButton);
+    runItemActions.appendChild(deleteButton);
+
+    runItem.appendChild(runItemMain);
+    runItem.appendChild(runItemActions);
+
+    return runItem;
 }
 
 /**
