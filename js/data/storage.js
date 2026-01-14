@@ -548,3 +548,36 @@ export function getRunStreak() {
         longest: Math.max(longestStreak, currentStreak)
     };
 }
+
+/**
+ * Get monthly statistics (total distance and runs per month)
+ * @returns {Array} Array of monthly stats objects: [{month: 'YYYY-MM', distance: number, runs: number}]
+ */
+export function getMonthlyStats() {
+    const runs = getRuns();
+
+    if (runs.length === 0) {
+        return [];
+    }
+
+    // Group runs by month (YYYY-MM format)
+    const monthlyData = {};
+
+    runs.forEach(run => {
+        const month = run.date.substring(0, 7); // Get 'YYYY-MM' from 'YYYY-MM-DD'
+
+        if (!monthlyData[month]) {
+            monthlyData[month] = {
+                month,
+                distance: 0,
+                runs: 0
+            };
+        }
+
+        monthlyData[month].distance += run.distance;
+        monthlyData[month].runs += 1;
+    });
+
+    // Convert to array and sort by month (newest first)
+    return Object.values(monthlyData).sort((a, b) => b.month.localeCompare(a.month));
+}
