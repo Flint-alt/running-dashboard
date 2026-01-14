@@ -8,6 +8,9 @@ import { getTodayISO, getCurrentWeek, formatDate, formatDateRange } from '../uti
 import { formatPace, formatDuration, formatDistance } from '../utils/pace.js';
 import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
 
+// Current run type filter
+let currentRunTypeFilter = 'all';
+
 /**
  * Initialize dashboard on app load
  */
@@ -15,6 +18,7 @@ export function initDashboard() {
     updateDashboard();
     setupDataManagement();
     setupRecentRunsEventDelegation();
+    setupRunTypeFilter();
 }
 
 /**
@@ -319,11 +323,24 @@ function updatePersonalRecords() {
  * Update recent runs list
  */
 function updateRecentRuns() {
-    const runs = getRuns().slice(0, 5); // Get 5 most recent
+    let runs = getRuns();
+
+    // Apply filter if not 'all'
+    if (currentRunTypeFilter !== 'all') {
+        runs = runs.filter(run => run.type === currentRunTypeFilter);
+    }
+
+    // Get 5 most recent (after filtering)
+    runs = runs.slice(0, 5);
+
     const container = document.getElementById('recent-runs');
 
     if (runs.length === 0) {
-        container.innerHTML = '<p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>';
+        if (currentRunTypeFilter === 'all') {
+            container.innerHTML = '<p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>';
+        } else {
+            container.innerHTML = `<p class="empty-state">No ${currentRunTypeFilter} runs found.</p>`;
+        }
         return;
     }
 
@@ -343,6 +360,30 @@ function setupRecentRunsEventDelegation() {
 
     // Add single delegated listener
     container.addEventListener('click', handleRecentRunsClick);
+}
+
+/**
+ * Set up run type filter dropdown
+ */
+function setupRunTypeFilter() {
+    const filterSelect = document.getElementById('run-type-filter');
+
+    if (!filterSelect) return;
+
+    // Remove old listener to prevent memory leaks
+    filterSelect.removeEventListener('change', handleFilterChange);
+
+    // Add event listener
+    filterSelect.addEventListener('change', handleFilterChange);
+}
+
+/**
+ * Handle filter dropdown change
+ * @param {Event} event - Change event
+ */
+function handleFilterChange(event) {
+    currentRunTypeFilter = event.target.value;
+    updateRecentRuns();
 }
 
 /**

@@ -158,7 +158,21 @@
 
                 <!-- Recent Runs -->
                 <div class="card recent-runs-card full-width">
-                    <h3>Recent Runs</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                        <h3 style="margin: 0;">Recent Runs</h3>
+                        <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
+                            <label for="run-type-filter" style="font-size: var(--font-size-sm); color: var(--text-secondary);">Filter:</label>
+                            <select id="run-type-filter" style="padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; cursor: pointer;">
+                                <option value="all">All Types</option>
+                                <option value="parkrun">Parkrun</option>
+                                <option value="long">Long Run</option>
+                                <option value="easy">Easy</option>
+                                <option value="tempo">Tempo</option>
+                                <option value="intervals">Intervals</option>
+                                <option value="recovery">Recovery</option>
+                            </select>
+                        </div>
+                    </div>
                     <div id="recent-runs">
                         <p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>
                     </div>
