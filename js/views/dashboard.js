@@ -3,10 +3,13 @@
  * Displays training overview, recent runs, and progress summary
  */
 
-import { getRuns, getRunsForWeek, getRun, deleteRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData } from '../data/storage.js';
+import { getRuns, getRunsForWeek, getRun, deleteRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData, getRecords, getRunStreak, exportRunsAsCSV } from '../data/storage.js';
 import { getTodayISO, getCurrentWeek, formatDate, formatDateRange } from '../utils/date.js';
 import { formatPace, formatDuration, formatDistance } from '../utils/pace.js';
 import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
+
+// Current run type filter
+let currentRunTypeFilter = 'all';
 
 /**
  * Initialize dashboard on app load
@@ -15,6 +18,7 @@ export function initDashboard() {
     updateDashboard();
     setupDataManagement();
     setupRecentRunsEventDelegation();
+    setupRunTypeFilter();
 }
 
 /**
@@ -24,8 +28,11 @@ export function initDashboard() {
 export function updateDashboard() {
     updateCurrentWeek();
     updateWeightProgress();
+    updateRunStreak();
     updateNextMilestone();
+    updateRaceCountdown();
     updateWeekSummary();
+    updatePersonalRecords();
     updateRecentRuns();
 }
 
@@ -110,6 +117,33 @@ function updateWeightProgress() {
 }
 
 /**
+ * Update run streak display
+ */
+function updateRunStreak() {
+    const streak = getRunStreak();
+
+    const currentEl = document.getElementById('streak-current');
+    const longestEl = document.getElementById('streak-longest');
+
+    currentEl.textContent = streak.current;
+
+    if (streak.longest === 1) {
+        longestEl.textContent = '1 week';
+    } else {
+        longestEl.textContent = `${streak.longest} weeks`;
+    }
+
+    // Add motivational message for streaks
+    if (streak.current >= 12) {
+        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Amazing Streak! 🔥';
+    } else if (streak.current >= 4) {
+        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Great Streak! 🔥';
+    } else {
+        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Current Streak';
+    }
+}
+
+/**
  * Update next milestone card
  */
 function updateNextMilestone() {
@@ -147,6 +181,39 @@ function updateNextMilestone() {
 }
 
 /**
+ * Update race day countdown
+ */
+function updateRaceCountdown() {
+    const today = new Date(getTodayISO());
+    const raceDay = new Date('2026-11-08'); // Nov 8, 2026
+
+    const diffTime = raceDay - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffWeeks = Math.floor(diffDays / 7);
+
+    const countdownDaysEl = document.getElementById('race-countdown-days');
+
+    if (diffDays < 0) {
+        countdownDaysEl.textContent = 'Race Complete! 🎉';
+    } else if (diffDays === 0) {
+        countdownDaysEl.textContent = 'Today! 🏃‍♂️';
+    } else if (diffDays === 1) {
+        countdownDaysEl.textContent = 'Tomorrow!';
+    } else if (diffDays < 7) {
+        countdownDaysEl.textContent = `${diffDays} days`;
+    } else if (diffWeeks === 1) {
+        countdownDaysEl.textContent = '1 week';
+    } else {
+        const remainingDays = diffDays % 7;
+        if (remainingDays === 0) {
+            countdownDaysEl.textContent = `${diffWeeks} weeks`;
+        } else {
+            countdownDaysEl.textContent = `${diffWeeks} weeks, ${remainingDays} days`;
+        }
+    }
+}
+
+/**
  * Update this week's summary
  */
 function updateWeekSummary() {
@@ -164,6 +231,27 @@ function updateWeekSummary() {
     const gymSessions = runs.filter(run => run.gym).length;
     const bodyweightSessions = runs.filter(run => run.bodyweight).length;
 
+    // Update weekly progress indicator
+    // Target is 2 runs per week (parkrun + long run minimum)
+    const targetRuns = 2;
+    const completedRuns = Math.min(runCount, targetRuns);
+    const progressPercentage = (completedRuns / targetRuns) * 100;
+
+    const progressText = document.getElementById('week-progress-text');
+    const progressBar = document.getElementById('week-progress-bar');
+
+    progressText.textContent = `${completedRuns}/${targetRuns} runs`;
+    progressBar.style.width = `${progressPercentage}%`;
+
+    // Change color if target is met
+    if (completedRuns >= targetRuns) {
+        progressText.style.color = '#15803d';
+        progressBar.style.background = 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)';
+    } else {
+        progressText.style.color = '#166534';
+        progressBar.style.background = 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)';
+    }
+
     // Update display
     document.getElementById('week-distance').textContent = `${totalDistance.toFixed(1)} km`;
     document.getElementById('week-runs').textContent = runCount;
@@ -172,14 +260,87 @@ function updateWeekSummary() {
 }
 
 /**
+ * Update personal records display
+ */
+function updatePersonalRecords() {
+    const records = getRecords();
+    const container = document.getElementById('personal-records');
+
+    if (!records.longestRun) {
+        container.innerHTML = '<p class="empty-state">No runs logged yet.</p>';
+        return;
+    }
+
+    const recordsHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md);">
+            ${records.fastest5k ? `
+                <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: var(--radius-md); border: 2px solid #f59e0b;">
+                    <div style="font-size: var(--font-size-sm); color: #92400e; font-weight: 600; margin-bottom: var(--spacing-xs);">Fastest 5K</div>
+                    <div style="font-size: var(--font-size-lg); font-weight: 700; color: #78350f; margin-bottom: var(--spacing-xs);">
+                        ${formatDuration((records.fastest5k.time / records.fastest5k.distance) * 5)}
+                    </div>
+                    <div style="font-size: var(--font-size-sm); color: #92400e);">
+                        ${formatDate(records.fastest5k.date, 'short')}
+                    </div>
+                </div>
+            ` : ''}
+            ${records.fastest10k ? `
+                <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: var(--radius-md); border: 2px solid #f59e0b;">
+                    <div style="font-size: var(--font-size-sm); color: #92400e; font-weight: 600; margin-bottom: var(--spacing-xs);">Fastest 10K</div>
+                    <div style="font-size: var(--font-size-lg); font-weight: 700; color: #78350f; margin-bottom: var(--spacing-xs);">
+                        ${formatDuration((records.fastest10k.time / records.fastest10k.distance) * 10)}
+                    </div>
+                    <div style="font-size: var(--font-size-sm); color: #92400e);">
+                        ${formatDate(records.fastest10k.date, 'short')}
+                    </div>
+                </div>
+            ` : ''}
+            <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: var(--radius-md); border: 2px solid #3b82f6;">
+                <div style="font-size: var(--font-size-sm); color: #1e3a8a; font-weight: 600; margin-bottom: var(--spacing-xs);">Longest Run</div>
+                <div style="font-size: var(--font-size-lg); font-weight: 700; color: #1e40af; margin-bottom: var(--spacing-xs);">
+                    ${records.longestRun.distance.toFixed(2)} km
+                </div>
+                <div style="font-size: var(--font-size-sm); color: #1e3a8a);">
+                    ${formatDate(records.longestRun.date, 'short')}
+                </div>
+            </div>
+            <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: var(--radius-md); border: 2px solid #22c55e;">
+                <div style="font-size: var(--font-size-sm); color: #14532d; font-weight: 600; margin-bottom: var(--spacing-xs);">Best Pace</div>
+                <div style="font-size: var(--font-size-lg); font-weight: 700; color: #15803d; margin-bottom: var(--spacing-xs);">
+                    ${formatPace(records.bestPace.pace)}
+                </div>
+                <div style="font-size: var(--font-size-sm); color: #14532d);">
+                    ${formatDate(records.bestPace.date, 'short')}
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = recordsHTML;
+}
+
+/**
  * Update recent runs list
  */
 function updateRecentRuns() {
-    const runs = getRuns().slice(0, 5); // Get 5 most recent
+    let runs = getRuns();
+
+    // Apply filter if not 'all'
+    if (currentRunTypeFilter !== 'all') {
+        runs = runs.filter(run => run.type === currentRunTypeFilter);
+    }
+
+    // Get 5 most recent (after filtering)
+    runs = runs.slice(0, 5);
+
     const container = document.getElementById('recent-runs');
 
     if (runs.length === 0) {
-        container.innerHTML = '<p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>';
+        if (currentRunTypeFilter === 'all') {
+            container.innerHTML = '<p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>';
+        } else {
+            container.innerHTML = `<p class="empty-state">No ${currentRunTypeFilter} runs found.</p>`;
+        }
         return;
     }
 
@@ -199,6 +360,30 @@ function setupRecentRunsEventDelegation() {
 
     // Add single delegated listener
     container.addEventListener('click', handleRecentRunsClick);
+}
+
+/**
+ * Set up run type filter dropdown
+ */
+function setupRunTypeFilter() {
+    const filterSelect = document.getElementById('run-type-filter');
+
+    if (!filterSelect) return;
+
+    // Remove old listener to prevent memory leaks
+    filterSelect.removeEventListener('change', handleFilterChange);
+
+    // Add event listener
+    filterSelect.addEventListener('change', handleFilterChange);
+}
+
+/**
+ * Handle filter dropdown change
+ * @param {Event} event - Change event
+ */
+function handleFilterChange(event) {
+    currentRunTypeFilter = event.target.value;
+    updateRecentRuns();
 }
 
 /**
@@ -340,16 +525,19 @@ function handleDeleteRun(event) {
  */
 function setupDataManagement() {
     const exportButton = document.getElementById('btn-export-data');
+    const exportCSVButton = document.getElementById('btn-export-csv');
     const importButton = document.getElementById('btn-import-data');
     const fileInput = document.getElementById('import-file-input');
 
     // Remove old listeners to prevent memory leaks
     exportButton.removeEventListener('click', handleExportData);
+    exportCSVButton.removeEventListener('click', handleExportCSV);
     importButton.removeEventListener('click', handleImportButtonClick);
     fileInput.removeEventListener('change', handleFileSelected);
 
     // Add event listeners
     exportButton.addEventListener('click', handleExportData);
+    exportCSVButton.addEventListener('click', handleExportCSV);
     importButton.addEventListener('click', handleImportButtonClick);
     fileInput.addEventListener('change', handleFileSelected);
 }
@@ -378,6 +566,38 @@ function handleExportData() {
     } catch (error) {
         console.error('Export error:', error);
         showImportStatus('Failed to export data. Please try again.', 'error');
+    }
+}
+
+/**
+ * Handle export CSV button click
+ */
+function handleExportCSV() {
+    try {
+        // Get the data as CSV string
+        const csvData = exportRunsAsCSV();
+
+        if (csvData === 'No runs to export') {
+            showImportStatus('No runs to export yet.', 'error');
+            return;
+        }
+
+        // Create a blob and download link
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `running-dashboard-runs-${getTodayISO()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Show success message
+        showImportStatus('Runs exported to CSV successfully!', 'success');
+    } catch (error) {
+        console.error('CSV Export error:', error);
+        showImportStatus('Failed to export CSV. Please try again.', 'error');
     }
 }
 

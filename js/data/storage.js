@@ -3,6 +3,8 @@
  * Handles all data storage operations for the running dashboard
  */
 
+import { getTodayISO, getCurrentWeek } from '../utils/date.js';
+
 // Storage key for all app data
 const STORAGE_KEY = 'runningDashboard';
 
@@ -104,10 +106,11 @@ export function getRun(id) {
 /**
  * Save a new run or update existing run
  * @param {Object} run - The run object to save
- * @returns {boolean} True if successful
+ * @returns {Object} Object with success status and newly achieved milestone (if any)
  */
 export function saveRun(run) {
     const store = getStore();
+    const isNewRun = !run.id;
 
     // If no ID, this is a new run - generate ID
     if (!run.id) {
@@ -123,10 +126,11 @@ export function saveRun(run) {
         }
     }
 
-    // Check for milestone achievements
-    checkMilestones(store);
+    // Check for milestone achievements (only for new runs)
+    const newMilestone = isNewRun ? checkMilestones(store) : null;
 
-    return setStore(store);
+    const success = setStore(store);
+    return { success, milestone: newMilestone };
 }
 
 /**
@@ -226,41 +230,49 @@ export function getMilestones() {
 /**
  * Check if any milestones have been achieved and update
  * @param {Object} store - The current store
+ * @returns {string|null} Name of newly achieved milestone, or null if none
  */
 function checkMilestones(store) {
     const runs = store.runs;
+    let newMilestone = null;
 
-    // Check for 10k (10km or more)
-    if (!store.milestones.first10k) {
-        if (runs.some(run => run.distance >= 10)) {
-            store.milestones.first10k = true;
-            console.log('Milestone achieved: First 10K!');
-        }
-    }
-
-    // Check for 15k
-    if (!store.milestones.first15k) {
-        if (runs.some(run => run.distance >= 15)) {
-            store.milestones.first15k = true;
-            console.log('Milestone achieved: First 15K!');
+    // Check for half marathon first (21.1km or more) - highest priority
+    if (!store.milestones.halfMarathon) {
+        if (runs.some(run => run.distance >= 21.1)) {
+            store.milestones.halfMarathon = true;
+            newMilestone = 'Half Marathon';
+            console.log('Milestone achieved: Half Marathon!');
         }
     }
 
     // Check for 20k
-    if (!store.milestones.first20k) {
+    if (!newMilestone && !store.milestones.first20k) {
         if (runs.some(run => run.distance >= 20)) {
             store.milestones.first20k = true;
+            newMilestone = 'First 20K';
             console.log('Milestone achieved: First 20K!');
         }
     }
 
-    // Check for half marathon (21.1km or more)
-    if (!store.milestones.halfMarathon) {
-        if (runs.some(run => run.distance >= 21.1)) {
-            store.milestones.halfMarathon = true;
-            console.log('Milestone achieved: Half Marathon!');
+    // Check for 15k
+    if (!newMilestone && !store.milestones.first15k) {
+        if (runs.some(run => run.distance >= 15)) {
+            store.milestones.first15k = true;
+            newMilestone = 'First 15K';
+            console.log('Milestone achieved: First 15K!');
         }
     }
+
+    // Check for 10k (10km or more)
+    if (!newMilestone && !store.milestones.first10k) {
+        if (runs.some(run => run.distance >= 10)) {
+            store.milestones.first10k = true;
+            newMilestone = 'First 10K';
+            console.log('Milestone achieved: First 10K!');
+        }
+    }
+
+    return newMilestone;
 }
 
 /**
@@ -270,6 +282,40 @@ function checkMilestones(store) {
 export function exportData() {
     const store = getStore();
     return JSON.stringify(store, null, 2);
+}
+
+/**
+ * Export runs as CSV
+ * @returns {string} CSV string of all runs
+ */
+export function exportRunsAsCSV() {
+    const runs = getRuns();
+
+    if (runs.length === 0) {
+        return 'No runs to export';
+    }
+
+    // CSV header
+    const headers = ['Date', 'Week', 'Type', 'Distance (km)', 'Time (seconds)', 'Pace (min/km)', 'Gym', 'Bodyweight', 'Notes'];
+    const csvRows = [headers.join(',')];
+
+    // Add each run as a row
+    runs.forEach(run => {
+        const row = [
+            run.date,
+            run.week || '',
+            run.type,
+            run.distance.toFixed(2),
+            run.time,
+            (run.pace / 60).toFixed(2), // Convert seconds to minutes
+            run.gym ? 'Yes' : 'No',
+            run.bodyweight ? 'Yes' : 'No',
+            `"${(run.notes || '').replace(/"/g, '""')}"` // Escape quotes in notes
+        ];
+        csvRows.push(row.join(','));
+    });
+
+    return csvRows.join('\n');
 }
 
 /**
@@ -390,4 +436,170 @@ export function getWeightProgress() {
 
     const progress = (lost / totalToLose) * 100;
     return Math.max(0, Math.min(100, progress));
+}
+
+/**
+ * Get personal records from all runs
+ * @returns {Object} Personal records object with fastest 5K, 10K, longest run, and best pace
+ */
+export function getRecords() {
+    const runs = getRuns();
+
+    if (runs.length === 0) {
+        return {
+            fastest5k: null,
+            fastest10k: null,
+            longestRun: null,
+            bestPace: null
+        };
+    }
+
+    // Find fastest 5K (must be at least 5km)
+    const runs5k = runs.filter(run => run.distance >= 5);
+    const fastest5k = runs5k.length > 0
+        ? runs5k.reduce((best, run) => {
+            const runPaceFor5k = (run.time / run.distance) * 5; // Normalize to 5k time
+            const bestPaceFor5k = (best.time / best.distance) * 5;
+            return runPaceFor5k < bestPaceFor5k ? run : best;
+        })
+        : null;
+
+    // Find fastest 10K (must be at least 10km)
+    const runs10k = runs.filter(run => run.distance >= 10);
+    const fastest10k = runs10k.length > 0
+        ? runs10k.reduce((best, run) => {
+            const runPaceFor10k = (run.time / run.distance) * 10; // Normalize to 10k time
+            const bestPaceFor10k = (best.time / best.distance) * 10;
+            return runPaceFor10k < bestPaceFor10k ? run : best;
+        })
+        : null;
+
+    // Find longest run
+    const longestRun = runs.reduce((longest, run) =>
+        run.distance > longest.distance ? run : longest
+    );
+
+    // Find best pace (fastest pace per km)
+    const bestPace = runs.reduce((fastest, run) =>
+        run.pace < fastest.pace ? run : fastest
+    );
+
+    return {
+        fastest5k,
+        fastest10k,
+        longestRun,
+        bestPace
+    };
+}
+
+/**
+ * Get run streak (consecutive weeks with at least one run)
+ * @returns {Object} Streak information: {current: number, longest: number}
+ */
+export function getRunStreak() {
+    const runs = getRuns();
+    const settings = getSettings();
+
+    if (runs.length === 0) {
+        return { current: 0, longest: 0 };
+    }
+
+    // Get all unique week numbers that have runs
+    const weeksWithRuns = new Set();
+    runs.forEach(run => {
+        if (run.week) {
+            weeksWithRuns.add(run.week);
+        }
+    });
+
+    // Sort week numbers
+    const sortedWeeks = Array.from(weeksWithRuns).sort((a, b) => a - b);
+
+    // Calculate current streak (working backwards from current week)
+    const today = getTodayISO();
+    const currentWeek = getCurrentWeek(today, settings.trainingPlanStart);
+
+    let currentStreak = 0;
+    for (let i = currentWeek; i >= 1; i--) {
+        if (weeksWithRuns.has(i)) {
+            currentStreak++;
+        } else {
+            break; // Streak is broken
+        }
+    }
+
+    // Calculate longest streak
+    let longestStreak = 0;
+    let tempStreak = 0;
+    let lastWeek = 0;
+
+    for (const week of sortedWeeks) {
+        if (lastWeek === 0 || week === lastWeek + 1) {
+            tempStreak++;
+            longestStreak = Math.max(longestStreak, tempStreak);
+        } else {
+            tempStreak = 1; // Reset streak
+        }
+        lastWeek = week;
+    }
+
+    return {
+        current: currentStreak,
+        longest: Math.max(longestStreak, currentStreak)
+    };
+}
+
+/**
+ * Get monthly statistics (total distance and runs per month)
+ * @returns {Array} Array of monthly stats objects: [{month: 'YYYY-MM', distance: number, runs: number}]
+ */
+export function getMonthlyStats() {
+    const runs = getRuns();
+
+    if (runs.length === 0) {
+        return [];
+    }
+
+    // Group runs by month (YYYY-MM format)
+    const monthlyData = {};
+
+    runs.forEach(run => {
+        const month = run.date.substring(0, 7); // Get 'YYYY-MM' from 'YYYY-MM-DD'
+
+        if (!monthlyData[month]) {
+            monthlyData[month] = {
+                month,
+                distance: 0,
+                runs: 0
+            };
+        }
+
+        monthlyData[month].distance += run.distance;
+        monthlyData[month].runs += 1;
+    });
+
+    // Convert to array and sort by month (newest first)
+    return Object.values(monthlyData).sort((a, b) => b.month.localeCompare(a.month));
+}
+
+/**
+ * Get run type distribution (count of each run type)
+ * @returns {Object} Object with run type counts: {parkrun: 5, long: 8, tempo: 3, ...}
+ */
+export function getRunTypeDistribution() {
+    const runs = getRuns();
+
+    if (runs.length === 0) {
+        return {};
+    }
+
+    // Count runs by type
+    const distribution = {};
+
+    runs.forEach(run => {
+        const type = run.type || 'unknown';
+        distribution[type] = (distribution[type] || 0) + 1;
+    });
+
+    return distribution;
 }

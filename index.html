@@ -79,6 +79,22 @@
                     </div>
                 </div>
 
+                <!-- Run Streak Card -->
+                <div class="card streak-card">
+                    <h3>Run Streak 🔥</h3>
+                    <div id="run-streak">
+                        <div class="streak-current" style="margin-bottom: var(--spacing-md);">
+                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Current Streak</div>
+                            <div style="font-size: var(--font-size-xxl); font-weight: 700; color: var(--primary-color);" id="streak-current">0</div>
+                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary);">weeks</div>
+                        </div>
+                        <div class="streak-longest" style="padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">
+                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Longest Streak</div>
+                            <div style="font-size: var(--font-size-lg); font-weight: 600; color: var(--secondary-color);" id="streak-longest">0 weeks</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Next Milestone Card -->
                 <div class="card milestone-card">
                     <h3>Next Milestone</h3>
@@ -88,11 +104,30 @@
                         <div class="milestone-target">Target: <span id="milestone-week">Week 9</span></div>
                         <div class="milestone-countdown" id="milestone-countdown">-</div>
                     </div>
+
+                    <!-- Race Day Countdown -->
+                    <div id="race-countdown" style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">
+                        <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Race Day</div>
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--primary-color);" id="race-countdown-days">-</div>
+                        <div style="font-size: var(--font-size-sm); color: var(--text-secondary);" id="race-countdown-date">Nov 8, 2026</div>
+                    </div>
                 </div>
 
                 <!-- This Week Summary -->
                 <div class="card week-summary-card">
                     <h3>This Week's Summary</h3>
+
+                    <!-- Weekly Progress Indicator -->
+                    <div style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: var(--radius-md); border: 2px solid #22c55e;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xs);">
+                            <span style="font-weight: 600; color: #166534;">Weekly Target</span>
+                            <span id="week-progress-text" style="font-weight: 700; color: #166534;">0/2 runs</span>
+                        </div>
+                        <div style="background: white; border-radius: var(--radius-sm); height: 12px; overflow: hidden;">
+                            <div id="week-progress-bar" style="height: 100%; background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); width: 0%; transition: width 0.3s ease; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);"></div>
+                        </div>
+                    </div>
+
                     <div id="week-summary">
                         <div class="summary-stat">
                             <span class="stat-label">Distance:</span>
@@ -113,9 +148,31 @@
                     </div>
                 </div>
 
+                <!-- Personal Records -->
+                <div class="card personal-records-card full-width">
+                    <h3>🏆 Personal Records</h3>
+                    <div id="personal-records">
+                        <p class="empty-state">No runs logged yet.</p>
+                    </div>
+                </div>
+
                 <!-- Recent Runs -->
                 <div class="card recent-runs-card full-width">
-                    <h3>Recent Runs</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                        <h3 style="margin: 0;">Recent Runs</h3>
+                        <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
+                            <label for="run-type-filter" style="font-size: var(--font-size-sm); color: var(--text-secondary);">Filter:</label>
+                            <select id="run-type-filter" style="padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; cursor: pointer;">
+                                <option value="all">All Types</option>
+                                <option value="parkrun">Parkrun</option>
+                                <option value="long">Long Run</option>
+                                <option value="easy">Easy</option>
+                                <option value="tempo">Tempo</option>
+                                <option value="intervals">Intervals</option>
+                                <option value="recovery">Recovery</option>
+                            </select>
+                        </div>
+                    </div>
                     <div id="recent-runs">
                         <p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>
                     </div>
@@ -127,11 +184,14 @@
                     <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-md);">
                         Backup your training data or import from a previous backup.
                     </p>
-                    <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
-                        <button id="btn-export-data" class="btn btn-primary" style="flex: 1; min-width: 150px;">
-                            Export Data (JSON)
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--spacing-md);">
+                        <button id="btn-export-data" class="btn btn-primary">
+                            Export All (JSON)
                         </button>
-                        <button id="btn-import-data" class="btn" style="flex: 1; min-width: 150px; background: white; border: 1px solid var(--border-color); color: var(--text-primary);">
+                        <button id="btn-export-csv" class="btn btn-primary">
+                            Export Runs (CSV)
+                        </button>
+                        <button id="btn-import-data" class="btn" style="background: white; border: 1px solid var(--border-color); color: var(--text-primary);">
                             Import Data (JSON)
                         </button>
                     </div>
@@ -261,6 +321,30 @@
                         <canvas id="weekly-mileage-chart"></canvas>
                     </div>
                 </div>
+
+                <!-- Monthly Summary -->
+                <div class="card monthly-stats-card full-width">
+                    <h3>Monthly Summary</h3>
+                    <div id="monthly-summary">
+                        <p class="empty-state">No runs logged yet.</p>
+                    </div>
+                </div>
+
+                <!-- Pace Trend Chart -->
+                <div class="card chart-card">
+                    <h3>Pace Trend</h3>
+                    <div class="chart-container">
+                        <canvas id="pace-trend-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Run Type Distribution Chart -->
+                <div class="card chart-card">
+                    <h3>Run Type Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="run-type-chart"></canvas>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -309,6 +393,22 @@
         </section>
 
     </main>
+
+    <!-- Milestone Celebration Modal -->
+    <div id="milestone-modal-overlay" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div style="text-align: center;">
+                <h2 style="font-size: var(--font-size-xxl); margin-bottom: var(--spacing-md);">🎉</h2>
+                <h3 id="milestone-modal-title" style="margin-bottom: var(--spacing-md);">Milestone Achieved!</h3>
+                <div id="milestone-modal-message" style="font-size: var(--font-size-lg); margin: var(--spacing-lg) 0; color: var(--text-secondary);">
+                    Congratulations on your achievement!
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="milestone-modal-close" class="btn btn-primary" style="flex: 1;">Awesome!</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
