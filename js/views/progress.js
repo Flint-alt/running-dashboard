@@ -3,7 +3,7 @@
  * Displays statistics and charts for training progress
  */
 
-import { getRuns, getStatistics, getSettings, getMonthlyStats } from '../data/storage.js';
+import { getRuns, getStatistics, getSettings, getMonthlyStats, getRunTypeDistribution } from '../data/storage.js';
 import { formatDuration, formatPace } from '../utils/pace.js';
 import { getCurrentWeek, getTodayISO } from '../utils/date.js';
 import { getWeekPlan } from '../data/trainingPlan.js';
@@ -11,6 +11,7 @@ import { getWeekPlan } from '../data/trainingPlan.js';
 // Chart instances (to destroy before creating new ones)
 let weeklyMileageChart = null;
 let paceTrendChart = null;
+let runTypeChart = null;
 
 /**
  * Initialize progress view
@@ -20,6 +21,7 @@ export function initProgress() {
     renderWeeklyMileageChart();
     renderMonthlyStats();
     renderPaceTrendChart();
+    renderRunTypeChart();
 }
 
 /**
@@ -277,6 +279,87 @@ function renderPaceTrendChart() {
                         ticks: {
                             maxRotation: 45,
                             minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        canvas.parentElement.innerHTML = '<p class="empty-state">Chart.js not loaded. Please refresh the page.</p>';
+    }
+}
+
+/**
+ * Render run type distribution pie chart
+ */
+function renderRunTypeChart() {
+    const canvas = document.getElementById('run-type-chart');
+    const ctx = canvas.getContext('2d');
+
+    // Destroy existing chart if it exists
+    if (runTypeChart) {
+        runTypeChart.destroy();
+    }
+
+    const distribution = getRunTypeDistribution();
+
+    if (Object.keys(distribution).length === 0) {
+        canvas.parentElement.innerHTML = '<p class="empty-state">No runs logged yet.</p>';
+        return;
+    }
+
+    // Define colors for each run type
+    const typeColors = {
+        parkrun: '#2563eb',
+        long: '#ec4899',
+        easy: '#10b981',
+        tempo: '#f59e0b',
+        intervals: '#ef4444',
+        recovery: '#8b5cf6'
+    };
+
+    // Prepare data
+    const labels = Object.keys(distribution).map(type => {
+        // Capitalize first letter
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    });
+
+    const data = Object.values(distribution);
+    const colors = Object.keys(distribution).map(type => typeColors[type] || '#6b7280');
+
+    // Create chart
+    if (typeof Chart !== 'undefined') {
+        runTypeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Run Count',
+                        data,
+                        backgroundColor: colors.map(c => c + '80'), // Add transparency
+                        borderColor: colors,
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} runs (${percentage}%)`;
+                            }
                         }
                     }
                 }

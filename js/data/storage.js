@@ -581,3 +581,25 @@ export function getMonthlyStats() {
     // Convert to array and sort by month (newest first)
     return Object.values(monthlyData).sort((a, b) => b.month.localeCompare(a.month));
 }
+
+/**
+ * Get run type distribution (count of each run type)
+ * @returns {Object} Object with run type counts: {parkrun: 5, long: 8, tempo: 3, ...}
+ */
+export function getRunTypeDistribution() {
+    const runs = getRuns();
+
+    if (runs.length === 0) {
+        return {};
+    }
+
+    // Count runs by type
+    const distribution = {};
+
+    runs.forEach(run => {
+        const type = run.type || 'unknown';
+        distribution[type] = (distribution[type] || 0) + 1;
+    });
+
+    return distribution;
+}
