@@ -3,7 +3,7 @@
  * Displays training overview, recent runs, and progress summary
  */
 
-import { getRuns, getRunsForWeek, getRun, deleteRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData, getRecords } from '../data/storage.js';
+import { getRuns, getRunsForWeek, getRun, deleteRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData, getRecords, getRunStreak, exportRunsAsCSV } from '../data/storage.js';
 import { getTodayISO, getCurrentWeek, formatDate, formatDateRange } from '../utils/date.js';
 import { formatPace, formatDuration, formatDistance } from '../utils/pace.js';
 import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
@@ -24,7 +24,9 @@ export function initDashboard() {
 export function updateDashboard() {
     updateCurrentWeek();
     updateWeightProgress();
+    updateRunStreak();
     updateNextMilestone();
+    updateRaceCountdown();
     updateWeekSummary();
     updatePersonalRecords();
     updateRecentRuns();
@@ -111,6 +113,33 @@ function updateWeightProgress() {
 }
 
 /**
+ * Update run streak display
+ */
+function updateRunStreak() {
+    const streak = getRunStreak();
+
+    const currentEl = document.getElementById('streak-current');
+    const longestEl = document.getElementById('streak-longest');
+
+    currentEl.textContent = streak.current;
+
+    if (streak.longest === 1) {
+        longestEl.textContent = '1 week';
+    } else {
+        longestEl.textContent = `${streak.longest} weeks`;
+    }
+
+    // Add motivational message for streaks
+    if (streak.current >= 12) {
+        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Amazing Streak! 🔥';
+    } else if (streak.current >= 4) {
+        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Great Streak! 🔥';
+    } else {
+        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Current Streak';
+    }
+}
+
+/**
  * Update next milestone card
  */
 function updateNextMilestone() {
@@ -144,6 +173,39 @@ function updateNextMilestone() {
         milestoneCountdownEl.textContent = 'Next week!';
     } else {
         milestoneCountdownEl.textContent = `${weeksUntil} weeks to go`;
+    }
+}
+
+/**
+ * Update race day countdown
+ */
+function updateRaceCountdown() {
+    const today = new Date(getTodayISO());
+    const raceDay = new Date('2026-11-08'); // Nov 8, 2026
+
+    const diffTime = raceDay - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffWeeks = Math.floor(diffDays / 7);
+
+    const countdownDaysEl = document.getElementById('race-countdown-days');
+
+    if (diffDays < 0) {
+        countdownDaysEl.textContent = 'Race Complete! 🎉';
+    } else if (diffDays === 0) {
+        countdownDaysEl.textContent = 'Today! 🏃‍♂️';
+    } else if (diffDays === 1) {
+        countdownDaysEl.textContent = 'Tomorrow!';
+    } else if (diffDays < 7) {
+        countdownDaysEl.textContent = `${diffDays} days`;
+    } else if (diffWeeks === 1) {
+        countdownDaysEl.textContent = '1 week';
+    } else {
+        const remainingDays = diffDays % 7;
+        if (remainingDays === 0) {
+            countdownDaysEl.textContent = `${diffWeeks} weeks`;
+        } else {
+            countdownDaysEl.textContent = `${diffWeeks} weeks, ${remainingDays} days`;
+        }
     }
 }
 
@@ -422,16 +484,19 @@ function handleDeleteRun(event) {
  */
 function setupDataManagement() {
     const exportButton = document.getElementById('btn-export-data');
+    const exportCSVButton = document.getElementById('btn-export-csv');
     const importButton = document.getElementById('btn-import-data');
     const fileInput = document.getElementById('import-file-input');
 
     // Remove old listeners to prevent memory leaks
     exportButton.removeEventListener('click', handleExportData);
+    exportCSVButton.removeEventListener('click', handleExportCSV);
     importButton.removeEventListener('click', handleImportButtonClick);
     fileInput.removeEventListener('change', handleFileSelected);
 
     // Add event listeners
     exportButton.addEventListener('click', handleExportData);
+    exportCSVButton.addEventListener('click', handleExportCSV);
     importButton.addEventListener('click', handleImportButtonClick);
     fileInput.addEventListener('change', handleFileSelected);
 }
@@ -460,6 +525,38 @@ function handleExportData() {
     } catch (error) {
         console.error('Export error:', error);
         showImportStatus('Failed to export data. Please try again.', 'error');
+    }
+}
+
+/**
+ * Handle export CSV button click
+ */
+function handleExportCSV() {
+    try {
+        // Get the data as CSV string
+        const csvData = exportRunsAsCSV();
+
+        if (csvData === 'No runs to export') {
+            showImportStatus('No runs to export yet.', 'error');
+            return;
+        }
+
+        // Create a blob and download link
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `running-dashboard-runs-${getTodayISO()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Show success message
+        showImportStatus('Runs exported to CSV successfully!', 'success');
+    } catch (error) {
+        console.error('CSV Export error:', error);
+        showImportStatus('Failed to export CSV. Please try again.', 'error');
     }
 }
 

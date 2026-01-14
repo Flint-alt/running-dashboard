@@ -79,6 +79,22 @@
                     </div>
                 </div>
 
+                <!-- Run Streak Card -->
+                <div class="card streak-card">
+                    <h3>Run Streak 🔥</h3>
+                    <div id="run-streak">
+                        <div class="streak-current" style="margin-bottom: var(--spacing-md);">
+                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Current Streak</div>
+                            <div style="font-size: var(--font-size-xxl); font-weight: 700; color: var(--primary-color);" id="streak-current">0</div>
+                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary);">weeks</div>
+                        </div>
+                        <div class="streak-longest" style="padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">
+                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Longest Streak</div>
+                            <div style="font-size: var(--font-size-lg); font-weight: 600; color: var(--secondary-color);" id="streak-longest">0 weeks</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Next Milestone Card -->
                 <div class="card milestone-card">
                     <h3>Next Milestone</h3>
@@ -87,6 +103,13 @@
                         <div class="milestone-distance" id="milestone-distance">10 km</div>
                         <div class="milestone-target">Target: <span id="milestone-week">Week 9</span></div>
                         <div class="milestone-countdown" id="milestone-countdown">-</div>
+                    </div>
+
+                    <!-- Race Day Countdown -->
+                    <div id="race-countdown" style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">
+                        <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Race Day</div>
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--primary-color);" id="race-countdown-days">-</div>
+                        <div style="font-size: var(--font-size-sm); color: var(--text-secondary);" id="race-countdown-date">Nov 8, 2026</div>
                     </div>
                 </div>
 
@@ -147,11 +170,14 @@
                     <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-md);">
                         Backup your training data or import from a previous backup.
                     </p>
-                    <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
-                        <button id="btn-export-data" class="btn btn-primary" style="flex: 1; min-width: 150px;">
-                            Export Data (JSON)
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--spacing-md);">
+                        <button id="btn-export-data" class="btn btn-primary">
+                            Export All (JSON)
                         </button>
-                        <button id="btn-import-data" class="btn" style="flex: 1; min-width: 150px; background: white; border: 1px solid var(--border-color); color: var(--text-primary);">
+                        <button id="btn-export-csv" class="btn btn-primary">
+                            Export Runs (CSV)
+                        </button>
+                        <button id="btn-import-data" class="btn" style="background: white; border: 1px solid var(--border-color); color: var(--text-primary);">
                             Import Data (JSON)
                         </button>
                     </div>

@@ -3,6 +3,8 @@
  * Handles all data storage operations for the running dashboard
  */
 
+import { getTodayISO, getCurrentWeek } from '../utils/date.js';
+
 // Storage key for all app data
 const STORAGE_KEY = 'runningDashboard';
 
@@ -283,6 +285,40 @@ export function exportData() {
 }
 
 /**
+ * Export runs as CSV
+ * @returns {string} CSV string of all runs
+ */
+export function exportRunsAsCSV() {
+    const runs = getRuns();
+
+    if (runs.length === 0) {
+        return 'No runs to export';
+    }
+
+    // CSV header
+    const headers = ['Date', 'Week', 'Type', 'Distance (km)', 'Time (seconds)', 'Pace (min/km)', 'Gym', 'Bodyweight', 'Notes'];
+    const csvRows = [headers.join(',')];
+
+    // Add each run as a row
+    runs.forEach(run => {
+        const row = [
+            run.date,
+            run.week || '',
+            run.type,
+            run.distance.toFixed(2),
+            run.time,
+            (run.pace / 60).toFixed(2), // Convert seconds to minutes
+            run.gym ? 'Yes' : 'No',
+            run.bodyweight ? 'Yes' : 'No',
+            `"${(run.notes || '').replace(/"/g, '""')}"` // Escape quotes in notes
+        ];
+        csvRows.push(row.join(','));
+    });
+
+    return csvRows.join('\n');
+}
+
+/**
  * Import data from JSON string
  * @param {string} jsonString - JSON data to import
  * @returns {boolean} True if successful
@@ -453,5 +489,62 @@ export function getRecords() {
         fastest10k,
         longestRun,
         bestPace
+    };
+}
+
+/**
+ * Get run streak (consecutive weeks with at least one run)
+ * @returns {Object} Streak information: {current: number, longest: number}
+ */
+export function getRunStreak() {
+    const runs = getRuns();
+    const settings = getSettings();
+
+    if (runs.length === 0) {
+        return { current: 0, longest: 0 };
+    }
+
+    // Get all unique week numbers that have runs
+    const weeksWithRuns = new Set();
+    runs.forEach(run => {
+        if (run.week) {
+            weeksWithRuns.add(run.week);
+        }
+    });
+
+    // Sort week numbers
+    const sortedWeeks = Array.from(weeksWithRuns).sort((a, b) => a - b);
+
+    // Calculate current streak (working backwards from current week)
+    const today = getTodayISO();
+    const currentWeek = getCurrentWeek(today, settings.trainingPlanStart);
+
+    let currentStreak = 0;
+    for (let i = currentWeek; i >= 1; i--) {
+        if (weeksWithRuns.has(i)) {
+            currentStreak++;
+        } else {
+            break; // Streak is broken
+        }
+    }
+
+    // Calculate longest streak
+    let longestStreak = 0;
+    let tempStreak = 0;
+    let lastWeek = 0;
+
+    for (const week of sortedWeeks) {
+        if (lastWeek === 0 || week === lastWeek + 1) {
+            tempStreak++;
+            longestStreak = Math.max(longestStreak, tempStreak);
+        } else {
+            tempStreak = 1; // Reset streak
+        }
+        lastWeek = week;
+    }
+
+    return {
+        current: currentStreak,
+        longest: Math.max(longestStreak, currentStreak)
     };
 }
