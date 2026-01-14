@@ -3,7 +3,7 @@
  * Displays training overview, recent runs, and progress summary
  */
 
-import { getRuns, getRunsForWeek, getRun, deleteRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData } from '../data/storage.js';
+import { getRuns, getRunsForWeek, getRun, deleteRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData, getRecords } from '../data/storage.js';
 import { getTodayISO, getCurrentWeek, formatDate, formatDateRange } from '../utils/date.js';
 import { formatPace, formatDuration, formatDistance } from '../utils/pace.js';
 import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
@@ -26,6 +26,7 @@ export function updateDashboard() {
     updateWeightProgress();
     updateNextMilestone();
     updateWeekSummary();
+    updatePersonalRecords();
     updateRecentRuns();
 }
 
@@ -164,11 +165,92 @@ function updateWeekSummary() {
     const gymSessions = runs.filter(run => run.gym).length;
     const bodyweightSessions = runs.filter(run => run.bodyweight).length;
 
+    // Update weekly progress indicator
+    // Target is 2 runs per week (parkrun + long run minimum)
+    const targetRuns = 2;
+    const completedRuns = Math.min(runCount, targetRuns);
+    const progressPercentage = (completedRuns / targetRuns) * 100;
+
+    const progressText = document.getElementById('week-progress-text');
+    const progressBar = document.getElementById('week-progress-bar');
+
+    progressText.textContent = `${completedRuns}/${targetRuns} runs`;
+    progressBar.style.width = `${progressPercentage}%`;
+
+    // Change color if target is met
+    if (completedRuns >= targetRuns) {
+        progressText.style.color = '#15803d';
+        progressBar.style.background = 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)';
+    } else {
+        progressText.style.color = '#166534';
+        progressBar.style.background = 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)';
+    }
+
     // Update display
     document.getElementById('week-distance').textContent = `${totalDistance.toFixed(1)} km`;
     document.getElementById('week-runs').textContent = runCount;
     document.getElementById('week-gym').textContent = gymSessions > 0 ? `✓ (${gymSessions})` : '-';
     document.getElementById('week-bodyweight').textContent = bodyweightSessions > 0 ? `✓ (${bodyweightSessions})` : '-';
+}
+
+/**
+ * Update personal records display
+ */
+function updatePersonalRecords() {
+    const records = getRecords();
+    const container = document.getElementById('personal-records');
+
+    if (!records.longestRun) {
+        container.innerHTML = '<p class="empty-state">No runs logged yet.</p>';
+        return;
+    }
+
+    const recordsHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md);">
+            ${records.fastest5k ? `
+                <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: var(--radius-md); border: 2px solid #f59e0b;">
+                    <div style="font-size: var(--font-size-sm); color: #92400e; font-weight: 600; margin-bottom: var(--spacing-xs);">Fastest 5K</div>
+                    <div style="font-size: var(--font-size-lg); font-weight: 700; color: #78350f; margin-bottom: var(--spacing-xs);">
+                        ${formatDuration((records.fastest5k.time / records.fastest5k.distance) * 5)}
+                    </div>
+                    <div style="font-size: var(--font-size-sm); color: #92400e);">
+                        ${formatDate(records.fastest5k.date, 'short')}
+                    </div>
+                </div>
+            ` : ''}
+            ${records.fastest10k ? `
+                <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: var(--radius-md); border: 2px solid #f59e0b;">
+                    <div style="font-size: var(--font-size-sm); color: #92400e; font-weight: 600; margin-bottom: var(--spacing-xs);">Fastest 10K</div>
+                    <div style="font-size: var(--font-size-lg); font-weight: 700; color: #78350f; margin-bottom: var(--spacing-xs);">
+                        ${formatDuration((records.fastest10k.time / records.fastest10k.distance) * 10)}
+                    </div>
+                    <div style="font-size: var(--font-size-sm); color: #92400e);">
+                        ${formatDate(records.fastest10k.date, 'short')}
+                    </div>
+                </div>
+            ` : ''}
+            <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: var(--radius-md); border: 2px solid #3b82f6;">
+                <div style="font-size: var(--font-size-sm); color: #1e3a8a; font-weight: 600; margin-bottom: var(--spacing-xs);">Longest Run</div>
+                <div style="font-size: var(--font-size-lg); font-weight: 700; color: #1e40af; margin-bottom: var(--spacing-xs);">
+                    ${records.longestRun.distance.toFixed(2)} km
+                </div>
+                <div style="font-size: var(--font-size-sm); color: #1e3a8a);">
+                    ${formatDate(records.longestRun.date, 'short')}
+                </div>
+            </div>
+            <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: var(--radius-md); border: 2px solid #22c55e;">
+                <div style="font-size: var(--font-size-sm); color: #14532d; font-weight: 600; margin-bottom: var(--spacing-xs);">Best Pace</div>
+                <div style="font-size: var(--font-size-lg); font-weight: 700; color: #15803d; margin-bottom: var(--spacing-xs);">
+                    ${formatPace(records.bestPace.pace)}
+                </div>
+                <div style="font-size: var(--font-size-sm); color: #14532d);">
+                    ${formatDate(records.bestPace.date, 'short')}
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = recordsHTML;
 }
 
 /**

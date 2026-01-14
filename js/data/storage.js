@@ -104,10 +104,11 @@ export function getRun(id) {
 /**
  * Save a new run or update existing run
  * @param {Object} run - The run object to save
- * @returns {boolean} True if successful
+ * @returns {Object} Object with success status and newly achieved milestone (if any)
  */
 export function saveRun(run) {
     const store = getStore();
+    const isNewRun = !run.id;
 
     // If no ID, this is a new run - generate ID
     if (!run.id) {
@@ -123,10 +124,11 @@ export function saveRun(run) {
         }
     }
 
-    // Check for milestone achievements
-    checkMilestones(store);
+    // Check for milestone achievements (only for new runs)
+    const newMilestone = isNewRun ? checkMilestones(store) : null;
 
-    return setStore(store);
+    const success = setStore(store);
+    return { success, milestone: newMilestone };
 }
 
 /**
@@ -226,41 +228,49 @@ export function getMilestones() {
 /**
  * Check if any milestones have been achieved and update
  * @param {Object} store - The current store
+ * @returns {string|null} Name of newly achieved milestone, or null if none
  */
 function checkMilestones(store) {
     const runs = store.runs;
+    let newMilestone = null;
 
-    // Check for 10k (10km or more)
-    if (!store.milestones.first10k) {
-        if (runs.some(run => run.distance >= 10)) {
-            store.milestones.first10k = true;
-            console.log('Milestone achieved: First 10K!');
-        }
-    }
-
-    // Check for 15k
-    if (!store.milestones.first15k) {
-        if (runs.some(run => run.distance >= 15)) {
-            store.milestones.first15k = true;
-            console.log('Milestone achieved: First 15K!');
+    // Check for half marathon first (21.1km or more) - highest priority
+    if (!store.milestones.halfMarathon) {
+        if (runs.some(run => run.distance >= 21.1)) {
+            store.milestones.halfMarathon = true;
+            newMilestone = 'Half Marathon';
+            console.log('Milestone achieved: Half Marathon!');
         }
     }
 
     // Check for 20k
-    if (!store.milestones.first20k) {
+    if (!newMilestone && !store.milestones.first20k) {
         if (runs.some(run => run.distance >= 20)) {
             store.milestones.first20k = true;
+            newMilestone = 'First 20K';
             console.log('Milestone achieved: First 20K!');
         }
     }
 
-    // Check for half marathon (21.1km or more)
-    if (!store.milestones.halfMarathon) {
-        if (runs.some(run => run.distance >= 21.1)) {
-            store.milestones.halfMarathon = true;
-            console.log('Milestone achieved: Half Marathon!');
+    // Check for 15k
+    if (!newMilestone && !store.milestones.first15k) {
+        if (runs.some(run => run.distance >= 15)) {
+            store.milestones.first15k = true;
+            newMilestone = 'First 15K';
+            console.log('Milestone achieved: First 15K!');
         }
     }
+
+    // Check for 10k (10km or more)
+    if (!newMilestone && !store.milestones.first10k) {
+        if (runs.some(run => run.distance >= 10)) {
+            store.milestones.first10k = true;
+            newMilestone = 'First 10K';
+            console.log('Milestone achieved: First 10K!');
+        }
+    }
+
+    return newMilestone;
 }
 
 /**
@@ -390,4 +400,58 @@ export function getWeightProgress() {
 
     const progress = (lost / totalToLose) * 100;
     return Math.max(0, Math.min(100, progress));
+}
+
+/**
+ * Get personal records from all runs
+ * @returns {Object} Personal records object with fastest 5K, 10K, longest run, and best pace
+ */
+export function getRecords() {
+    const runs = getRuns();
+
+    if (runs.length === 0) {
+        return {
+            fastest5k: null,
+            fastest10k: null,
+            longestRun: null,
+            bestPace: null
+        };
+    }
+
+    // Find fastest 5K (must be at least 5km)
+    const runs5k = runs.filter(run => run.distance >= 5);
+    const fastest5k = runs5k.length > 0
+        ? runs5k.reduce((best, run) => {
+            const runPaceFor5k = (run.time / run.distance) * 5; // Normalize to 5k time
+            const bestPaceFor5k = (best.time / best.distance) * 5;
+            return runPaceFor5k < bestPaceFor5k ? run : best;
+        })
+        : null;
+
+    // Find fastest 10K (must be at least 10km)
+    const runs10k = runs.filter(run => run.distance >= 10);
+    const fastest10k = runs10k.length > 0
+        ? runs10k.reduce((best, run) => {
+            const runPaceFor10k = (run.time / run.distance) * 10; // Normalize to 10k time
+            const bestPaceFor10k = (best.time / best.distance) * 10;
+            return runPaceFor10k < bestPaceFor10k ? run : best;
+        })
+        : null;
+
+    // Find longest run
+    const longestRun = runs.reduce((longest, run) =>
+        run.distance > longest.distance ? run : longest
+    );
+
+    // Find best pace (fastest pace per km)
+    const bestPace = runs.reduce((fastest, run) =>
+        run.pace < fastest.pace ? run : fastest
+    );
+
+    return {
+        fastest5k,
+        fastest10k,
+        longestRun,
+        bestPace
+    };
 }

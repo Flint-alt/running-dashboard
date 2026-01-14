@@ -189,9 +189,9 @@ function handleFormSubmit(event) {
     }
 
     // Save run
-    const success = saveRun(run);
+    const result = saveRun(run);
 
-    if (success) {
+    if (result.success) {
         const message = editingRunId ? 'Run updated successfully!' : 'Run logged successfully!';
         showSuccess(message);
 
@@ -201,6 +201,11 @@ function handleFormSubmit(event) {
         document.getElementById('calculated-pace').textContent = '-';
         form.querySelector('button[type="submit"]').textContent = 'Log Run';
         delete form.dataset.editingRunId;
+
+        // Show milestone modal if a new milestone was achieved
+        if (result.milestone) {
+            showMilestoneModal(result.milestone);
+        }
 
         // If we're on the dashboard, refresh it
         if (window.location.hash === '#dashboard') {
@@ -317,4 +322,50 @@ function showSuccess(message) {
 function clearMessages() {
     document.getElementById('form-errors').innerHTML = '';
     document.getElementById('form-success').textContent = '';
+}
+
+/**
+ * Show milestone celebration modal
+ * @param {string} milestoneName - Name of the milestone achieved
+ */
+function showMilestoneModal(milestoneName) {
+    const overlay = document.getElementById('milestone-modal-overlay');
+    const title = document.getElementById('milestone-modal-title');
+    const message = document.getElementById('milestone-modal-message');
+    const closeBtn = document.getElementById('milestone-modal-close');
+
+    // Set the content
+    title.textContent = `${milestoneName} Complete!`;
+
+    let messageText = '';
+    if (milestoneName === 'First 10K') {
+        messageText = 'You just ran your first 10 kilometers! This is a huge milestone in your running journey. Keep up the amazing work!';
+    } else if (milestoneName === 'First 15K') {
+        messageText = 'Incredible! You\'ve reached 15 kilometers! You\'re getting stronger with every run. The half marathon is within reach!';
+    } else if (milestoneName === 'First 20K') {
+        messageText = 'Outstanding! 20 kilometers is an amazing achievement! You\'re so close to the half marathon distance now!';
+    } else if (milestoneName === 'Half Marathon') {
+        messageText = 'Congratulations! You\'ve completed a half marathon distance (21.1km)! This is an incredible achievement that few runners accomplish. You should be incredibly proud!';
+    }
+
+    message.textContent = messageText;
+
+    // Show the modal
+    overlay.style.display = 'flex';
+
+    // Set up close handler
+    const closeModal = () => {
+        overlay.style.display = 'none';
+        closeBtn.removeEventListener('click', closeModal);
+        overlay.removeEventListener('click', handleOverlayClick);
+    };
+
+    const handleOverlayClick = (event) => {
+        if (event.target === overlay) {
+            closeModal();
+        }
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', handleOverlayClick);
 }
