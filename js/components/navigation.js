@@ -30,7 +30,44 @@ export function initRouter() {
     // Handle initial route on page load
     handleRoute();
 
+    // Set up mobile navigation toggle
+    initMobileNav();
+
     console.log('Router initialized');
+}
+
+/**
+ * Initialize mobile navigation toggle
+ * Handles hamburger menu functionality on mobile devices
+ */
+function initMobileNav() {
+    const navToggle = document.getElementById('nav-toggle');
+    const navLinks = document.getElementById('nav-links');
+    const navLinkElements = document.querySelectorAll('.nav-link');
+
+    if (!navToggle || !navLinks) return;
+
+    // Toggle menu when hamburger is clicked
+    navToggle.addEventListener('click', () => {
+        navToggle.classList.toggle('active');
+        navLinks.classList.toggle('active');
+    });
+
+    // Close menu when a nav link is clicked
+    navLinkElements.forEach(link => {
+        link.addEventListener('click', () => {
+            navToggle.classList.remove('active');
+            navLinks.classList.remove('active');
+        });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!navToggle.contains(e.target) && !navLinks.contains(e.target)) {
+            navToggle.classList.remove('active');
+            navLinks.classList.remove('active');
+        }
+    });
 }
 
 /**
