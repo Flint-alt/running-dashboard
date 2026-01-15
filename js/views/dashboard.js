@@ -446,6 +446,12 @@ function createRunCard(run) {
                         <span class="run-stat-label">Pace</span>
                         <span class="run-stat-value">${formatPace(run.pace)}</span>
                     </div>
+                    ${run.heartRate ? `
+                        <div class="run-stat">
+                            <span class="run-stat-label">❤️ Avg HR</span>
+                            <span class="run-stat-value">${run.heartRate} bpm</span>
+                        </div>
+                    ` : ''}
                 </div>
                 ${safeNotes ? `<div class="run-notes" style="margin-top: var(--spacing-sm); color: var(--text-secondary); font-size: var(--font-size-sm);">${safeNotes}</div>` : ''}
                 ${run.gym || run.bodyweight ? `

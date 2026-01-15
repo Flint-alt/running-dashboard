@@ -20,9 +20,13 @@
     --secondary-light: #10B981;
 
     --danger-color: #DC2626;
+    --danger-bg: #FEE2E2;
     --warning-color: #F59E0B;
+    --warning-bg: #FEF3C7;
     --info-color: #0891B2;
+    --info-bg: #CFFAFE;
     --success-color: #10B981;
+    --success-bg: #D1FAE5;
 
     --text-primary: #1a1a1a;
     --text-secondary: #6b7280;
