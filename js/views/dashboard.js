@@ -274,7 +274,7 @@ function updatePersonalRecords() {
     const recordsHTML = `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md);">
             ${records.fastest5k ? `
-                <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: var(--radius-md); border: 2px solid #f59e0b;">
+                <div class="pr-item" data-run-id="${records.fastest5k.id}" style="padding: var(--spacing-md); background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: var(--radius-md); border: 2px solid #f59e0b; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(245, 158, 11, 0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
                     <div style="font-size: var(--font-size-sm); color: #92400e; font-weight: 600; margin-bottom: var(--spacing-xs);">Fastest 5K</div>
                     <div style="font-size: var(--font-size-lg); font-weight: 700; color: #78350f; margin-bottom: var(--spacing-xs);">
                         ${formatDuration((records.fastest5k.time / records.fastest5k.distance) * 5)}
@@ -285,7 +285,7 @@ function updatePersonalRecords() {
                 </div>
             ` : ''}
             ${records.fastest10k ? `
-                <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: var(--radius-md); border: 2px solid #f59e0b;">
+                <div class="pr-item" data-run-id="${records.fastest10k.id}" style="padding: var(--spacing-md); background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: var(--radius-md); border: 2px solid #f59e0b; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(245, 158, 11, 0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
                     <div style="font-size: var(--font-size-sm); color: #92400e; font-weight: 600; margin-bottom: var(--spacing-xs);">Fastest 10K</div>
                     <div style="font-size: var(--font-size-lg); font-weight: 700; color: #78350f; margin-bottom: var(--spacing-xs);">
                         ${formatDuration((records.fastest10k.time / records.fastest10k.distance) * 10)}
@@ -295,7 +295,7 @@ function updatePersonalRecords() {
                     </div>
                 </div>
             ` : ''}
-            <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: var(--radius-md); border: 2px solid #3b82f6;">
+            <div class="pr-item" data-run-id="${records.longestRun.id}" style="padding: var(--spacing-md); background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: var(--radius-md); border: 2px solid #3b82f6; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(59, 130, 246, 0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
                 <div style="font-size: var(--font-size-sm); color: #1e3a8a; font-weight: 600; margin-bottom: var(--spacing-xs);">Longest Run</div>
                 <div style="font-size: var(--font-size-lg); font-weight: 700; color: #1e40af; margin-bottom: var(--spacing-xs);">
                     ${records.longestRun.distance.toFixed(2)} km
@@ -304,7 +304,7 @@ function updatePersonalRecords() {
                     ${formatDate(records.longestRun.date, 'short')}
                 </div>
             </div>
-            <div class="pr-item" style="padding: var(--spacing-md); background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: var(--radius-md); border: 2px solid #22c55e;">
+            <div class="pr-item" data-run-id="${records.bestPace.id}" style="padding: var(--spacing-md); background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: var(--radius-md); border: 2px solid #22c55e; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(34, 197, 94, 0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
                 <div style="font-size: var(--font-size-sm); color: #14532d; font-weight: 600; margin-bottom: var(--spacing-xs);">Best Pace</div>
                 <div style="font-size: var(--font-size-lg); font-weight: 700; color: #15803d; margin-bottom: var(--spacing-xs);">
                     ${formatPace(records.bestPace.pace)}
@@ -317,6 +317,17 @@ function updatePersonalRecords() {
     `;
 
     container.innerHTML = recordsHTML;
+
+    // Add click handlers to all PR items
+    document.querySelectorAll('.pr-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const runId = this.getAttribute('data-run-id');
+            if (runId) {
+                localStorage.setItem('editingRunId', runId);
+                window.location.hash = 'log-run';
+            }
+        });
+    });
 }
 
 /**
