@@ -16,11 +16,17 @@
     <nav class="main-nav">
         <div class="nav-container">
             <h1 class="app-title">Running Dashboard</h1>
-            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
-                <span class="hamburger"></span>
-            </button>
+            <div style="display: flex; gap: var(--spacing-md); align-items: center;">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                    <span class="hamburger"></span>
+                </button>
+            </div>
             <ul class="nav-links" id="nav-links">
                 <li><a href="#dashboard" class="nav-link active" data-page="dashboard">Dashboard</a></li>
+                <li><a href="#calendar" class="nav-link" data-page="calendar">Calendar</a></li>
                 <li><a href="#training-plan" class="nav-link" data-page="training-plan">Training Plan</a></li>
                 <li><a href="#log-run" class="nav-link" data-page="log-run">Log Run</a></li>
                 <li><a href="#progress" class="nav-link" data-page="progress">Progress</a></li>
@@ -200,6 +206,41 @@
                     </div>
                     <input type="file" id="import-file-input" accept=".json" style="display: none;">
                     <div id="import-status" style="margin-top: var(--spacing-sm); font-size: var(--font-size-sm);"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calendar Section -->
+        <section id="calendar" class="page-section">
+            <div class="section-header">
+                <h2>Calendar</h2>
+                <p class="section-subtitle">Visual overview of your training</p>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button class="btn-icon" id="prev-month" aria-label="Previous month">←</button>
+                    <h3 id="calendar-month-year"></h3>
+                    <button class="btn-icon" id="next-month" aria-label="Next month">→</button>
+                </div>
+
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <div class="calendar-legend">
+                    <div class="legend-item"><span class="legend-color" style="background: #2563eb;"></span> Parkrun</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #ec4899;"></span> Long Run</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #10b981;"></span> Easy Run</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #f59e0b;"></span> Tempo Run</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #ef4444;"></span> Intervals</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #8b5cf6;"></span> Recovery</div>
+                </div>
+
+                <!-- Selected Day Details -->
+                <div class="card" id="calendar-day-details" style="margin-top: var(--spacing-lg); display: none;">
+                    <h4 id="selected-date"></h4>
+                    <div id="selected-day-runs"></div>
                 </div>
             </div>
         </section>
