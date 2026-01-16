@@ -23,6 +23,7 @@ export function initLogRun() {
     const timeInput = document.getElementById('run-time');
     const paceDisplay = document.getElementById('calculated-pace');
     const submitButton = form.querySelector('button[type="submit"]');
+    const screenshotInput = document.getElementById('strava-screenshot');
 
     // Clear any previous messages
     clearMessages();
@@ -57,10 +58,14 @@ export function initLogRun() {
     distanceInput.removeEventListener('input', debouncedUpdatePaceCalculation);
     timeInput.removeEventListener('input', debouncedUpdatePaceCalculation);
     form.removeEventListener('submit', handleFormSubmit);
+    screenshotInput.removeEventListener('change', handleScreenshotUpload);
 
     // Calculate pace when distance or time changes (debounced for performance)
     distanceInput.addEventListener('input', debouncedUpdatePaceCalculation);
     timeInput.addEventListener('input', debouncedUpdatePaceCalculation);
+
+    // Handle screenshot upload
+    screenshotInput.addEventListener('change', handleScreenshotUpload);
 
     // Handle form submission
     form.addEventListener('submit', handleFormSubmit);
@@ -131,6 +136,7 @@ function populateFormWithRun(run) {
     document.getElementById('run-type').value = run.type;
     document.getElementById('run-distance').value = run.distance;
     document.getElementById('run-time').value = formatDuration(run.time);
+    document.getElementById('run-heart-rate').value = run.heartRate || '';
     document.getElementById('run-notes').value = run.notes || '';
     document.getElementById('gym-session').checked = run.gym || false;
     document.getElementById('bodyweight-session').checked = run.bodyweight || false;
@@ -173,6 +179,7 @@ function handleFormSubmit(event) {
         distance: formData.distance,
         time: timeSeconds,
         pace: pace,
+        heartRate: formData.heartRate || null,
         notes: formData.notes,
         gym: formData.gym,
         bodyweight: formData.bodyweight,
@@ -221,11 +228,13 @@ function handleFormSubmit(event) {
  * @returns {Object} Form data
  */
 function getFormData() {
+    const heartRateValue = document.getElementById('run-heart-rate').value;
     return {
         date: document.getElementById('run-date').value,
         type: document.getElementById('run-type').value,
         distance: parseFloat(document.getElementById('run-distance').value),
         time: document.getElementById('run-time').value.trim(),
+        heartRate: heartRateValue ? parseInt(heartRateValue) : null,
         notes: document.getElementById('run-notes').value.trim(),
         gym: document.getElementById('gym-session').checked,
         bodyweight: document.getElementById('bodyweight-session').checked
@@ -368,4 +377,165 @@ function showMilestoneModal(milestoneName) {
 
     closeBtn.addEventListener('click', closeModal);
     overlay.addEventListener('click', handleOverlayClick);
+}
+
+/**
+ * Handle screenshot upload and OCR processing
+ * @param {Event} event - File input change event
+ */
+async function handleScreenshotUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusDiv = document.getElementById('ocr-status');
+    const previewDiv = document.getElementById('screenshot-preview');
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        previewDiv.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; border-radius: var(--radius-md);" alt="Screenshot preview">`;
+    };
+    reader.readAsDataURL(file);
+
+    // Show processing status
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = 'var(--info-bg)';
+    statusDiv.style.color = 'var(--info-color)';
+    statusDiv.textContent = '🔄 Analyzing screenshot... This may take 5-10 seconds...';
+
+    try {
+        // Run OCR using Tesseract.js
+        const result = await Tesseract.recognize(file, 'eng', {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    const progress = Math.round(m.progress * 100);
+                    statusDiv.textContent = `🔄 Analyzing screenshot... ${progress}%`;
+                }
+            }
+        });
+
+        const text = result.data.text;
+        console.log('OCR Result:', text);
+
+        // Parse the extracted text
+        const extractedData = parseStravaScreenshot(text);
+
+        if (extractedData.found) {
+            // Auto-populate form
+            if (extractedData.distance) {
+                document.getElementById('run-distance').value = extractedData.distance;
+            }
+            if (extractedData.time) {
+                document.getElementById('run-time').value = extractedData.time;
+            }
+            if (extractedData.heartRate) {
+                document.getElementById('run-heart-rate').value = extractedData.heartRate;
+            }
+
+            // Trigger pace calculation
+            updatePaceCalculation();
+
+            // Show success
+            statusDiv.style.background = 'var(--success-bg)';
+            statusDiv.style.color = 'var(--success-color)';
+            statusDiv.textContent = '✅ Data extracted successfully! Please review and adjust if needed.';
+        } else {
+            // No data found
+            statusDiv.style.background = 'var(--warning-bg)';
+            statusDiv.style.color = 'var(--warning-color)';
+            statusDiv.textContent = '⚠️ Could not extract run data from screenshot. Please enter manually.';
+        }
+    } catch (error) {
+        console.error('OCR Error:', error);
+        statusDiv.style.background = 'var(--danger-bg)';
+        statusDiv.style.color = 'var(--danger-color)';
+        statusDiv.textContent = '❌ Failed to process screenshot. Please enter data manually.';
+    }
+}
+
+/**
+ * Parse Strava screenshot text to extract run data
+ * @param {string} text - OCR extracted text
+ * @returns {Object} Extracted data
+ */
+function parseStravaScreenshot(text) {
+    const data = {
+        distance: null,
+        time: null,
+        heartRate: null,
+        found: false
+    };
+
+    // Clean up text
+    text = text.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+
+    // Extract distance (km or miles)
+    // Patterns: "5.0 km", "5.00km", "3.1 mi", "3.11miles"
+    const distancePattern = /(\d+\.?\d*)\s*(km|mi|miles?)/gi;
+    const distanceMatch = text.match(distancePattern);
+    if (distanceMatch) {
+        const match = distanceMatch[0];
+        const value = parseFloat(match);
+        // Convert miles to km if needed
+        if (match.toLowerCase().includes('mi')) {
+            data.distance = (value * 1.60934).toFixed(2);
+        } else {
+            data.distance = value.toFixed(2);
+        }
+        data.found = true;
+    }
+
+    // Extract time (various formats)
+    // Patterns: "30:45", "1:30:45", "30m 45s", "1h 30m 45s"
+    const timePatterns = [
+        /(\d{1,2}):(\d{2}):(\d{2})/,  // HH:MM:SS or H:MM:SS
+        /(\d{1,2}):(\d{2})/,           // MM:SS or M:SS
+        /(\d+)h\s*(\d+)m\s*(\d+)s/i,  // 1h 30m 45s
+        /(\d+)m\s*(\d+)s/i             // 30m 45s
+    ];
+
+    for (const pattern of timePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+            if (pattern.source.includes('h')) {
+                // Hour format
+                const hours = parseInt(match[1] || 0);
+                const minutes = parseInt(match[2] || 0);
+                const seconds = parseInt(match[3] || 0);
+                data.time = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else if (match[3]) {
+                // HH:MM:SS
+                data.time = `${match[1]}:${match[2]}:${match[3]}`;
+            } else {
+                // MM:SS
+                data.time = `${match[1]}:${match[2]}`;
+            }
+            data.found = true;
+            break;
+        }
+    }
+
+    // Extract heart rate (average)
+    // Patterns: "155 bpm", "155bpm", "avg 155", "average 155"
+    const hrPatterns = [
+        /(\d{2,3})\s*bpm/i,
+        /avg\s*(\d{2,3})/i,
+        /average\s*(\d{2,3})/i,
+        /heart rate\s*(\d{2,3})/i
+    ];
+
+    for (const pattern of hrPatterns) {
+        const match = text.match(pattern);
+        if (match) {
+            const hr = parseInt(match[1]);
+            // Validate heart rate is reasonable (40-220 bpm)
+            if (hr >= 40 && hr <= 220) {
+                data.heartRate = hr;
+                data.found = true;
+                break;
+            }
+        }
+    }
+
+    return data;
 }

@@ -16,11 +16,17 @@
     <nav class="main-nav">
         <div class="nav-container">
             <h1 class="app-title">Running Dashboard</h1>
-            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
-                <span class="hamburger"></span>
-            </button>
+            <div style="display: flex; gap: var(--spacing-md); align-items: center;">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                    <span class="hamburger"></span>
+                </button>
+            </div>
             <ul class="nav-links" id="nav-links">
                 <li><a href="#dashboard" class="nav-link active" data-page="dashboard">Dashboard</a></li>
+                <li><a href="#calendar" class="nav-link" data-page="calendar">Calendar</a></li>
                 <li><a href="#training-plan" class="nav-link" data-page="training-plan">Training Plan</a></li>
                 <li><a href="#log-run" class="nav-link" data-page="log-run">Log Run</a></li>
                 <li><a href="#progress" class="nav-link" data-page="progress">Progress</a></li>
@@ -204,6 +210,41 @@
             </div>
         </section>
 
+        <!-- Calendar Section -->
+        <section id="calendar" class="page-section">
+            <div class="section-header">
+                <h2>Calendar</h2>
+                <p class="section-subtitle">Visual overview of your training</p>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button class="btn-icon" id="prev-month" aria-label="Previous month">←</button>
+                    <h3 id="calendar-month-year"></h3>
+                    <button class="btn-icon" id="next-month" aria-label="Next month">→</button>
+                </div>
+
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <div class="calendar-legend">
+                    <div class="legend-item"><span class="legend-color" style="background: #2563eb;"></span> Parkrun</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #ec4899;"></span> Long Run</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #10b981;"></span> Easy Run</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #f59e0b;"></span> Tempo Run</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #ef4444;"></span> Intervals</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #8b5cf6;"></span> Recovery</div>
+                </div>
+
+                <!-- Selected Day Details -->
+                <div class="card" id="calendar-day-details" style="margin-top: var(--spacing-lg); display: none;">
+                    <h4 id="selected-date"></h4>
+                    <div id="selected-day-runs"></div>
+                </div>
+            </div>
+        </section>
+
         <!-- Training Plan Section -->
         <section id="training-plan" class="page-section">
             <div class="section-header">
@@ -260,6 +301,23 @@
                     <div class="form-group pace-display">
                         <label>Pace</label>
                         <div class="pace-value" id="calculated-pace">-</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="run-heart-rate">Average Heart Rate (optional)</label>
+                        <input type="number" id="run-heart-rate" name="heartRate" min="40" max="220" step="1" placeholder="e.g., 155">
+                        <small style="color: var(--text-secondary); font-size: var(--font-size-sm);">Average BPM during the run</small>
+                    </div>
+
+                    <!-- Strava Screenshot Upload -->
+                    <div class="card" style="padding: var(--spacing-lg); margin-bottom: var(--spacing-lg); background: rgba(255, 255, 255, 0.5);">
+                        <h4 style="margin-top: 0; margin-bottom: var(--spacing-md); color: var(--primary-color);">📸 Upload Strava Screenshot</h4>
+                        <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                            Upload a screenshot of your Strava run and we'll automatically extract the data!
+                        </p>
+                        <input type="file" id="strava-screenshot" accept="image/*" style="margin-bottom: var(--spacing-md);">
+                        <div id="ocr-status" style="display: none; padding: var(--spacing-sm); border-radius: var(--radius-md); margin-top: var(--spacing-sm);"></div>
+                        <div id="screenshot-preview" style="margin-top: var(--spacing-md); max-width: 300px;"></div>
                     </div>
 
                     <div class="form-group">
@@ -415,6 +473,9 @@
 
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Tesseract.js OCR Library -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
 
     <!-- Application JavaScript (ES6 Modules) -->
     <script type="module" src="js/app.js"></script>

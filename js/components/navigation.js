@@ -9,10 +9,12 @@ import { initLogRun } from '../views/logRun.js';
 import { initProgress } from '../views/progress.js';
 import { initWeight } from '../views/weight.js';
 import { initTrainingPlan } from '../views/trainingPlan.js';
+import { initCalendar } from '../views/calendar.js';
 
 // Route handlers - functions to call when navigating to each page
 const routes = {
     'dashboard': updateDashboard,
+    'calendar': initCalendar,
     'training-plan': initTrainingPlan,
     'log-run': initLogRun,
     'progress': initProgress,
@@ -32,6 +34,9 @@ export function initRouter() {
 
     // Set up mobile navigation toggle
     initMobileNav();
+
+    // Set up theme toggle
+    initThemeToggle();
 
     console.log('Router initialized');
 }
@@ -147,4 +152,43 @@ export function getCurrentRoute() {
  */
 export function refreshCurrentPage() {
     handleRoute();
+}
+
+/**
+ * Initialize theme toggle
+ * Handles dark mode switching and persistence
+ */
+function initThemeToggle() {
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.querySelector('.theme-icon');
+
+    if (!themeToggle) return;
+
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+
+    // Toggle theme on button click
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+    });
+}
+
+/**
+ * Apply theme to document
+ * @param {string} theme - 'light' or 'dark'
+ */
+function applyTheme(theme) {
+    const themeIcon = document.querySelector('.theme-icon');
+
+    if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        if (themeIcon) themeIcon.textContent = '☀️';
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        if (themeIcon) themeIcon.textContent = '🌙';
+    }
 }
