@@ -296,7 +296,7 @@ export function exportRunsAsCSV() {
     }
 
     // CSV header
-    const headers = ['Date', 'Week', 'Type', 'Distance (km)', 'Time (seconds)', 'Pace (min/km)', 'Gym', 'Bodyweight', 'Notes'];
+    const headers = ['Date', 'Week', 'Type', 'Distance (km)', 'Time (seconds)', 'Pace (min/km)', 'Avg HR (bpm)', 'Gym', 'Bodyweight', 'Notes'];
     const csvRows = [headers.join(',')];
 
     // Add each run as a row
@@ -308,6 +308,7 @@ export function exportRunsAsCSV() {
             run.distance.toFixed(2),
             run.time,
             (run.pace / 60).toFixed(2), // Convert seconds to minutes
+            run.heartRate || '',
             run.gym ? 'Yes' : 'No',
             run.bodyweight ? 'Yes' : 'No',
             `"${(run.notes || '').replace(/"/g, '""')}"` // Escape quotes in notes

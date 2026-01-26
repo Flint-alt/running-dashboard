@@ -31,7 +31,7 @@ export function formatDate(date, format = 'long') {
     }
 
     if (format === 'short') {
-        return `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${String(dateObj.getFullYear()).slice(2)}`;
+        return `${dateObj.getDate()}/${dateObj.getMonth() + 1}/${String(dateObj.getFullYear()).slice(2)}`;
     }
 
     // Default: 'long' format

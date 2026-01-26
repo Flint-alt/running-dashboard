@@ -131,6 +131,7 @@ function populateFormWithRun(run) {
     document.getElementById('run-type').value = run.type;
     document.getElementById('run-distance').value = run.distance;
     document.getElementById('run-time').value = formatDuration(run.time);
+    document.getElementById('run-heart-rate').value = run.heartRate || '';
     document.getElementById('run-notes').value = run.notes || '';
     document.getElementById('gym-session').checked = run.gym || false;
     document.getElementById('bodyweight-session').checked = run.bodyweight || false;
@@ -173,6 +174,7 @@ function handleFormSubmit(event) {
         distance: formData.distance,
         time: timeSeconds,
         pace: pace,
+        heartRate: formData.heartRate,
         notes: formData.notes,
         gym: formData.gym,
         bodyweight: formData.bodyweight,
@@ -221,11 +223,13 @@ function handleFormSubmit(event) {
  * @returns {Object} Form data
  */
 function getFormData() {
+    const heartRateValue = document.getElementById('run-heart-rate').value;
     return {
         date: document.getElementById('run-date').value,
         type: document.getElementById('run-type').value,
         distance: parseFloat(document.getElementById('run-distance').value),
         time: document.getElementById('run-time').value.trim(),
+        heartRate: heartRateValue ? parseInt(heartRateValue, 10) : null,
         notes: document.getElementById('run-notes').value.trim(),
         gym: document.getElementById('gym-session').checked,
         bodyweight: document.getElementById('bodyweight-session').checked
