@@ -431,7 +431,7 @@ function createRunCard(run) {
                     <span class="run-type-badge ${run.type}" style="background-color: ${typeColor}20; color: ${typeColor};">
                         ${run.type}
                     </span>
-                    <span class="run-date">${formatDate(run.date)}</span>
+                    <span class="run-date">${formatDate(run.date, 'short')}</span>
                 </div>
                 <div class="run-stats">
                     <div class="run-stat">
@@ -505,7 +505,7 @@ function handleDeleteRun(event) {
     // Confirm deletion
     const confirmed = confirm(
         `Are you sure you want to delete this run?\n\n` +
-        `Date: ${formatDate(run.date)}\n` +
+        `Date: ${formatDate(run.date, 'short')}\n` +
         `Distance: ${run.distance.toFixed(2)} km\n` +
         `Time: ${formatDuration(run.time)}\n\n` +
         `This action cannot be undone.`
