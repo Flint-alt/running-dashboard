@@ -328,20 +328,98 @@
     color: var(--text-secondary);
 }
 
-/* Weight Progress Card */
-.weight-progress-card .weight-stat {
+/* Hero Stat - large focal number used across cards */
+.hero-stat {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-sm);
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    line-height: 1;
 }
 
-.weight-progress-card .stat-label {
+.hero-stat-value {
+    font-size: var(--font-size-4xl);
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+.hero-stat-unit {
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    color: var(--text-tertiary);
+}
+
+.hero-stat-label {
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    margin-top: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+/* Weight Progress Card */
+.weight-progress-card {
+    text-align: center;
+}
+
+.weight-sub-stats {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
+}
+
+.weight-sub-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.weight-sub-value {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+.weight-sub-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Streak Card */
+.streak-card {
+    text-align: center;
+}
+
+.streak-card .streak-current {
+    margin-bottom: var(--spacing-md);
+}
+
+.streak-longest {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.streak-longest-label {
+    font-size: var(--font-size-sm);
     color: var(--text-secondary);
 }
 
-.weight-progress-card .stat-value {
+.streak-longest-value {
+    font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--secondary-color);
 }
 
 /* Milestone Card */

@@ -205,7 +205,7 @@ function updateWeightProgress() {
     const weightLost = getWeightLost();
     const progress = getWeightProgress();
 
-    document.getElementById('current-weight').textContent = `${currentWeight.toFixed(1)} kg`;
+    document.getElementById('current-weight').textContent = currentWeight.toFixed(1);
     document.getElementById('weight-lost').textContent = `${weightLost.toFixed(1)} kg`;
 
     const progressBar = document.getElementById('weight-progress');

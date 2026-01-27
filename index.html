@@ -95,17 +95,20 @@
                 <div class="card weight-progress-card">
                     <h3>Weight Progress</h3>
                     <div id="weight-summary">
-                        <div class="weight-stat">
-                            <span class="stat-label">Current:</span>
-                            <span class="stat-value" id="current-weight">74.5 kg</span>
+                        <div class="hero-stat">
+                            <span class="hero-stat-value" id="current-weight">74.5</span>
+                            <span class="hero-stat-unit">kg</span>
                         </div>
-                        <div class="weight-stat">
-                            <span class="stat-label">Goal:</span>
-                            <span class="stat-value">65 kg</span>
-                        </div>
-                        <div class="weight-stat">
-                            <span class="stat-label">Lost:</span>
-                            <span class="stat-value" id="weight-lost">0 kg</span>
+                        <div class="hero-stat-label">current weight</div>
+                        <div class="weight-sub-stats">
+                            <div class="weight-sub-stat">
+                                <span class="weight-sub-value">65 kg</span>
+                                <span class="weight-sub-label">goal</span>
+                            </div>
+                            <div class="weight-sub-stat">
+                                <span class="weight-sub-value" id="weight-lost">0.0 kg</span>
+                                <span class="weight-sub-label">lost</span>
+                            </div>
                         </div>
                         <div class="progress-bar">
                             <div class="progress-fill" id="weight-progress"></div>
@@ -117,14 +120,15 @@
                 <div class="card streak-card">
                     <h3>Run Streak 🔥</h3>
                     <div id="run-streak">
-                        <div class="streak-current" style="margin-bottom: var(--spacing-md);">
-                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Current Streak</div>
-                            <div style="font-size: var(--font-size-xxl); font-weight: 700; color: var(--primary-color);" id="streak-current">0</div>
-                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary);">weeks</div>
+                        <div class="streak-current">
+                            <div class="hero-stat">
+                                <span class="hero-stat-value" id="streak-current">0</span>
+                            </div>
+                            <div class="hero-stat-label">week streak</div>
                         </div>
-                        <div class="streak-longest" style="padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">
-                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Longest Streak</div>
-                            <div style="font-size: var(--font-size-lg); font-weight: 600; color: var(--secondary-color);" id="streak-longest">0 weeks</div>
+                        <div class="streak-longest">
+                            <span class="streak-longest-label">Longest:</span>
+                            <span class="streak-longest-value" id="streak-longest">0 weeks</span>
                         </div>
                     </div>
                 </div>
