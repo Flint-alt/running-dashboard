@@ -99,7 +99,6 @@ function handleWeightSubmit(event) {
 function renderWeightChart() {
     const canvas = document.getElementById('weight-chart');
     const emptyStateId = 'weight-chart-empty-state';
-    const emptyStateMessage = 'No weight data yet. Log your first weight entry above!';
     const emptyState = canvas ? canvas.parentElement.querySelector(`#${emptyStateId}`) : null;
 
     if (!canvas) {
@@ -123,11 +122,15 @@ function renderWeightChart() {
 
     if (weights.length === 0) {
         // Show empty state without removing the canvas
-        const message = document.createElement('p');
-        message.id = emptyStateId;
-        message.className = 'empty-state';
-        message.textContent = emptyStateMessage;
-        canvas.parentElement.appendChild(message);
+        const wrapper = document.createElement('div');
+        wrapper.id = emptyStateId;
+        wrapper.className = 'empty-state-enhanced';
+        wrapper.innerHTML = `
+            <div class="empty-state-icon">&#9878;&#65039;</div>
+            <div class="empty-state-title">No weight data yet</div>
+            <div class="empty-state-message">Track your weight over time to see trends toward your ${settings.goalWeight || 65}kg goal.</div>
+        `;
+        canvas.parentElement.appendChild(wrapper);
         canvas.style.display = 'none';
         return;
     }

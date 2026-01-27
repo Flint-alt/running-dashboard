@@ -339,7 +339,13 @@ function updatePersonalRecords() {
     const container = document.getElementById('personal-records');
 
     if (!records.longestRun) {
-        container.innerHTML = '<p class="empty-state">No runs logged yet.</p>';
+        container.innerHTML = `
+            <div class="empty-state-enhanced">
+                <div class="empty-state-icon">&#127942;</div>
+                <div class="empty-state-title">No personal records yet</div>
+                <div class="empty-state-message">Your fastest times and longest distances will appear here once you start logging runs.</div>
+                <a href="#log-run" class="empty-state-action">Log Your First Run</a>
+            </div>`;
         return;
     }
 
@@ -409,9 +415,28 @@ function updateRecentRuns() {
 
     if (runs.length === 0) {
         if (currentRunTypeFilter === 'all') {
-            container.innerHTML = '<p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>';
+            const settings = getSettings();
+            const today = getTodayISO();
+            const currentWeek = getCurrentWeek(today, settings.trainingPlanStart);
+            const weekPlan = getWeekPlan(currentWeek);
+            let hint = '';
+            if (weekPlan) {
+                hint = `Week ${currentWeek} has a ${weekPlan.parkrun}km parkrun and a ${weekPlan.longRun}km long run planned.`;
+            }
+            container.innerHTML = `
+                <div class="empty-state-enhanced">
+                    <div class="empty-state-icon">&#127939;</div>
+                    <div class="empty-state-title">No runs logged yet</div>
+                    <div class="empty-state-message">${hint ? hint + ' ' : ''}Record your training sessions to track your progress here.</div>
+                    <a href="#log-run" class="empty-state-action">Log Your First Run</a>
+                </div>`;
         } else {
-            container.innerHTML = `<p class="empty-state">No ${currentRunTypeFilter} runs found.</p>`;
+            container.innerHTML = `
+                <div class="empty-state-enhanced">
+                    <div class="empty-state-icon">&#128269;</div>
+                    <div class="empty-state-title">No ${currentRunTypeFilter} runs found</div>
+                    <div class="empty-state-message">Try a different filter or log a ${currentRunTypeFilter} run.</div>
+                </div>`;
         }
         return;
     }
