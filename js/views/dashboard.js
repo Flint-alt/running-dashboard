@@ -4,7 +4,7 @@
  */
 
 import { getRuns, getRunsForWeek, getRun, deleteRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData, getRecords, getRunStreak, exportRunsAsCSV } from '../data/storage.js';
-import { getTodayISO, getCurrentWeek, formatDate, formatDateRange } from '../utils/date.js';
+import { getTodayISO, getCurrentWeek, formatDate, formatDateRange, getWeekDateRange, addDays, parseDate } from '../utils/date.js';
 import { formatPace, formatDuration, formatDistance } from '../utils/pace.js';
 import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
 
@@ -26,6 +26,7 @@ export function initDashboard() {
  * Called when navigating to dashboard or after data changes
  */
 export function updateDashboard() {
+    updateWeeklyCalendar();
     updateCurrentWeek();
     updateWeightProgress();
     updateRunStreak();
@@ -34,6 +35,77 @@ export function updateDashboard() {
     updateWeekSummary();
     updatePersonalRecords();
     updateRecentRuns();
+}
+
+/**
+ * Update the weekly calendar strip showing Mon-Sun with run indicators
+ */
+function updateWeeklyCalendar() {
+    const container = document.getElementById('weekly-calendar-strip');
+    if (!container) return;
+
+    const settings = getSettings();
+    const today = getTodayISO();
+    const currentWeek = getCurrentWeek(today, settings.trainingPlanStart);
+    const runs = getRuns();
+
+    // Get the Monday of the current week
+    const todayDate = parseDate(today);
+    const dayOfWeek = todayDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const mondayISO = addDays(today, -daysToMonday);
+
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    // Build day data
+    const days = dayNames.map((name, i) => {
+        const dateISO = addDays(mondayISO, i);
+        const dateObj = parseDate(dateISO);
+        const dayNum = dateObj.getDate();
+        const isToday = dateISO === today;
+        const isFuture = dateISO > today;
+
+        // Find runs on this date
+        const dayRuns = runs.filter(run => run.date === dateISO);
+
+        return { name, dateISO, dayNum, isToday, isFuture, runs: dayRuns };
+    });
+
+    // Build HTML
+    const weekLabel = currentWeek >= 1 && currentWeek <= 44
+        ? `Week ${currentWeek}`
+        : currentWeek < 1 ? 'Pre-training' : 'Post-training';
+
+    container.innerHTML = `
+        <div class="calendar-strip-header">
+            <span class="calendar-strip-title">This Week</span>
+            <span class="calendar-strip-week">${weekLabel}</span>
+        </div>
+        <div class="calendar-strip">
+            ${days.map(day => {
+                const hasRun = day.runs.length > 0;
+                const firstRun = day.runs[0];
+                const totalDistance = day.runs.reduce((sum, r) => sum + r.distance, 0);
+                const runType = firstRun ? firstRun.type : '';
+
+                let classes = 'calendar-day';
+                if (day.isToday) classes += ' is-today';
+                if (day.isFuture) classes += ' is-future';
+                if (hasRun) classes += ' has-run';
+
+                const indicatorClass = hasRun ? `calendar-day-indicator type-${runType}` : 'calendar-day-indicator';
+
+                return `
+                    <div class="${classes}">
+                        <span class="calendar-day-name">${day.name}</span>
+                        <span class="calendar-day-date">${day.dayNum}</span>
+                        <span class="${indicatorClass}"></span>
+                        <span class="calendar-day-distance">${hasRun ? totalDistance.toFixed(1) + 'km' : ''}</span>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
 }
 
 /**
