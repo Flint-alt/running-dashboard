@@ -12,6 +12,16 @@
     <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
+    <!-- SVG Gradient Definitions -->
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#FF6B6B" />
+                <stop offset="100%" stop-color="#FFB088" />
+            </linearGradient>
+        </defs>
+    </svg>
+
     <!-- Main Navigation -->
     <nav class="main-nav">
         <div class="nav-container">
@@ -51,17 +61,31 @@
                 <div class="card current-week-card">
                     <h3>Current Week</h3>
                     <div id="current-week-info">
-                        <div class="week-number">Week <span id="week-num">-</span></div>
-                        <div class="week-dates" id="week-dates">-</div>
-                        <div class="phase-badge" id="phase-badge">-</div>
-                        <div class="planned-runs">
-                            <div class="planned-run">
-                                <span class="run-label">Parkrun:</span>
-                                <span id="planned-parkrun">5 km</span>
+                        <div class="current-week-layout">
+                            <div class="progress-ring-container">
+                                <svg class="progress-ring" viewBox="0 0 120 120">
+                                    <circle class="progress-ring-bg" cx="60" cy="60" r="52" />
+                                    <circle class="progress-ring-fill" id="progress-ring-fill" cx="60" cy="60" r="52" />
+                                </svg>
+                                <div class="progress-ring-label">
+                                    <span class="progress-ring-week" id="week-num">-</span>
+                                    <span class="progress-ring-of">of 44</span>
+                                </div>
                             </div>
-                            <div class="planned-run">
-                                <span class="run-label">Long Run:</span>
-                                <span id="planned-long-run">- km</span>
+                            <div class="current-week-details">
+                                <div class="week-dates" id="week-dates">-</div>
+                                <div class="phase-badge" id="phase-badge">-</div>
+                                <div id="progress-ring-percent" class="progress-ring-percent"></div>
+                                <div class="planned-runs">
+                                    <div class="planned-run">
+                                        <span class="run-label">Parkrun:</span>
+                                        <span id="planned-parkrun">5 km</span>
+                                    </div>
+                                    <div class="planned-run">
+                                        <span class="run-label">Long Run:</span>
+                                        <span id="planned-long-run">- km</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -121,25 +121,29 @@ function updateCurrentWeek() {
     const phaseBadgeEl = document.getElementById('phase-badge');
     const plannedParkrunEl = document.getElementById('planned-parkrun');
     const plannedLongRunEl = document.getElementById('planned-long-run');
+    const progressRingFill = document.getElementById('progress-ring-fill');
+    const progressPercentEl = document.getElementById('progress-ring-percent');
 
     // Handle case where we're before plan starts or after plan ends
     if (currentWeek < 1) {
-        weekNumEl.textContent = 'Not Started';
+        weekNumEl.textContent = '-';
         weekDatesEl.textContent = 'Training begins Jan 5, 2026';
         phaseBadgeEl.textContent = 'Upcoming';
         phaseBadgeEl.className = 'phase-badge';
         plannedParkrunEl.textContent = '-';
         plannedLongRunEl.textContent = '-';
+        updateProgressRing(progressRingFill, progressPercentEl, 0);
         return;
     }
 
     if (currentWeek > 44) {
-        weekNumEl.textContent = 'Complete!';
+        weekNumEl.textContent = '44';
         weekDatesEl.textContent = 'Training plan finished';
         phaseBadgeEl.textContent = 'Done';
         phaseBadgeEl.className = 'phase-badge';
         plannedParkrunEl.textContent = '-';
         plannedLongRunEl.textContent = '-';
+        updateProgressRing(progressRingFill, progressPercentEl, 100);
         return;
     }
 
@@ -148,6 +152,10 @@ function updateCurrentWeek() {
 
     weekNumEl.textContent = currentWeek;
     weekDatesEl.textContent = weekPlan.dateRange.formatted;
+
+    // Update progress ring
+    const percent = Math.round((currentWeek / 44) * 100);
+    updateProgressRing(progressRingFill, progressPercentEl, percent);
 
     // Set phase badge
     phaseBadgeEl.textContent = `Phase ${weekPlan.phase.id}`;
@@ -170,6 +178,22 @@ function updateCurrentWeek() {
         recoveryBadge.textContent = 'Recovery Week';
         recoveryBadge.style.marginLeft = 'var(--spacing-sm)';
         phaseBadgeEl.after(recoveryBadge);
+    }
+}
+
+/**
+ * Update the SVG progress ring fill and percentage label
+ */
+function updateProgressRing(fillEl, percentEl, percent) {
+    if (!fillEl) return;
+    const circumference = 2 * Math.PI * 52; // r=52
+    const offset = circumference - (percent / 100) * circumference;
+    // Animate after a brief delay so the transition is visible on page load
+    requestAnimationFrame(() => {
+        fillEl.style.strokeDashoffset = offset;
+    });
+    if (percentEl) {
+        percentEl.textContent = `${percent}% complete`;
     }
 }
 
