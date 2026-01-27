@@ -12,6 +12,40 @@ import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
 let currentRunTypeFilter = 'all';
 
 /**
+ * Animate a numeric value from 0 to target over a duration.
+ * @param {HTMLElement} el - Element to update
+ * @param {number} target - Target value
+ * @param {Object} options - { duration, decimals, suffix, prefix }
+ */
+function animateValue(el, target, options = {}) {
+    const { duration = 500, decimals = 0, suffix = '', prefix = '' } = options;
+    const start = 0;
+    const startTime = performance.now();
+
+    // Skip animation for zero values
+    if (target === 0) {
+        el.textContent = `${prefix}${target.toFixed(decimals)}${suffix}`;
+        return;
+    }
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // Ease-out cubic for a natural deceleration feel
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = start + (target - start) * eased;
+
+        el.textContent = `${prefix}${current.toFixed(decimals)}${suffix}`;
+
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+
+    requestAnimationFrame(update);
+}
+
+/**
  * Initialize dashboard on app load
  */
 export function initDashboard() {
@@ -205,8 +239,8 @@ function updateWeightProgress() {
     const weightLost = getWeightLost();
     const progress = getWeightProgress();
 
-    document.getElementById('current-weight').textContent = currentWeight.toFixed(1);
-    document.getElementById('weight-lost').textContent = `${weightLost.toFixed(1)} kg`;
+    animateValue(document.getElementById('current-weight'), currentWeight, { decimals: 1, duration: 600 });
+    animateValue(document.getElementById('weight-lost'), weightLost, { decimals: 1, suffix: ' kg', duration: 600 });
 
     const progressBar = document.getElementById('weight-progress');
     progressBar.style.width = `${progress}%`;
@@ -221,7 +255,7 @@ function updateRunStreak() {
     const currentEl = document.getElementById('streak-current');
     const longestEl = document.getElementById('streak-longest');
 
-    currentEl.textContent = streak.current;
+    animateValue(currentEl, streak.current, { duration: 600 });
 
     if (streak.longest === 1) {
         longestEl.textContent = '1 week';
@@ -229,13 +263,16 @@ function updateRunStreak() {
         longestEl.textContent = `${streak.longest} weeks`;
     }
 
-    // Add motivational message for streaks
-    if (streak.current >= 12) {
-        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Amazing Streak! 🔥';
-    } else if (streak.current >= 4) {
-        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Great Streak! 🔥';
-    } else {
-        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Current Streak';
+    // Update the hero label with motivational message for streaks
+    const heroLabel = document.querySelector('.streak-current .hero-stat-label');
+    if (heroLabel) {
+        if (streak.current >= 12) {
+            heroLabel.textContent = 'amazing streak!';
+        } else if (streak.current >= 4) {
+            heroLabel.textContent = 'great streak!';
+        } else {
+            heroLabel.textContent = 'week streak';
+        }
     }
 }
 
@@ -349,8 +386,8 @@ function updateWeekSummary() {
     }
 
     // Update display
-    document.getElementById('week-distance').textContent = `${totalDistance.toFixed(1)} km`;
-    document.getElementById('week-runs').textContent = runCount;
+    animateValue(document.getElementById('week-distance'), totalDistance, { decimals: 1, suffix: ' km', duration: 600 });
+    animateValue(document.getElementById('week-runs'), runCount, { duration: 400 });
     document.getElementById('week-gym').textContent = gymSessions > 0 ? `✓ (${gymSessions})` : '-';
     document.getElementById('week-bodyweight').textContent = bodyweightSessions > 0 ? `✓ (${bodyweightSessions})` : '-';
 }
