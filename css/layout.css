@@ -383,6 +383,130 @@
     font-family: var(--font-mono);
 }
 
+/* ===== Weekly Calendar Strip ===== */
+.weekly-calendar-card {
+    padding: var(--spacing-lg) var(--spacing-xl);
+}
+
+.weekly-calendar-card:hover {
+    transform: none;
+}
+
+.calendar-strip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.calendar-strip-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.calendar-strip-week {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.calendar-strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.calendar-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-xs);
+    border-radius: var(--radius-md);
+    transition: background-color var(--transition-fast);
+    position: relative;
+}
+
+.calendar-day.is-today {
+    background-color: var(--bg-tertiary);
+    box-shadow: inset 0 0 0 2px var(--primary-color);
+}
+
+.calendar-day-name {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.calendar-day-date {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.calendar-day-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    transition: all var(--transition-base);
+    margin-top: 2px;
+}
+
+.calendar-day.has-run .calendar-day-indicator {
+    width: 12px;
+    height: 12px;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-parkrun {
+    background-color: #2563eb;
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-long {
+    background-color: #ec4899;
+    box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-easy {
+    background-color: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-tempo {
+    background-color: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-intervals {
+    background-color: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-recovery {
+    background-color: #8b5cf6;
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+
+.calendar-day-distance {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    min-height: 1rem;
+}
+
+.calendar-day.is-future .calendar-day-name,
+.calendar-day.is-future .calendar-day-date {
+    opacity: 0.5;
+}
+
 /* ===== Training Plan Layout ===== */
 .training-plan-container {
     overflow-x: auto;
@@ -577,6 +701,22 @@
 
 /* Mobile (480px and below) */
 @media (max-width: 480px) {
+    .calendar-strip {
+        gap: 2px;
+    }
+
+    .calendar-day {
+        padding: var(--spacing-xs) 2px;
+    }
+
+    .calendar-day-name {
+        font-size: 0.625rem;
+    }
+
+    .calendar-day-distance {
+        font-size: 0.5625rem;
+    }
+
     .app-title {
         font-size: var(--font-size-lg);
     }
