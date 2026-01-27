@@ -43,13 +43,13 @@ js/
 │   ├── storage.js           # localStorage API (CRUD for runs, weights, settings)
 │   └── trainingPlan.js      # 44-week plan data + date calculations
 ├── views/                   # Page components (each exports init function)
-│   ├── dashboard.js         # Overview with week info, recent runs, weight
-│   ├── logRun.js           # Form to record runs with auto-pace calculation
+│   ├── dashboard.js         # Overview with week info, recent runs, weight, records, streaks
+│   ├── logRun.js           # Form to record runs with auto-pace calculation + heart rate
 │   ├── trainingPlan.js     # 44-week calendar grid view
 │   ├── progress.js         # Charts and statistics
 │   └── weight.js           # Weight tracking with Chart.js
 ├── components/
-│   └── navigation.js       # Hash-based SPA routing
+│   └── navigation.js       # Hash-based SPA routing + mobile hamburger nav
 └── utils/
     ├── date.js             # ISO date parsing, week calculations, ranges
     └── pace.js             # Time/pace conversions, formatting
@@ -69,6 +69,7 @@ js/
       time: 1800,              // seconds
       pace: 360,               // seconds per km
       notes: "Felt strong",
+      heartRate: 145,          // optional, average bpm (40-220)
       gym: false,
       bodyweight: false,
       week: 2                  // training week number
@@ -101,7 +102,39 @@ js/
 - `first20k`: 20km or more
 - `halfMarathon`: 21.1km or more
 
-Milestones are one-way flags (once true, stay true even if run is deleted).
+Milestones are one-way flags (once true, stay true even if run is deleted). Achieving a milestone triggers a celebration modal overlay.
+
+### Heart Rate Tracking
+
+Runs optionally store an average heart rate (`heartRate` field, integer bpm, valid range 40-220). The log-run form includes an optional heart rate input (`#run-heart-rate`). When present, heart rate is displayed in dashboard run cards and included in CSV exports.
+
+### Personal Records and Streaks
+
+`storage.js` exposes analytics functions used by the dashboard:
+- `getRecords()` — personal bests: fastest 5k, fastest 10k, longest run, best pace
+- `getRunStreak()` — current and longest run streak (in weeks)
+- `getMonthlyStats()` — distance and run count grouped by month
+- `getRunTypeDistribution()` — count of each run type (parkrun, long, easy, etc.)
+- `getStatistics()` — totals: distance, time, average pace, longest run
+
+The dashboard displays records, streak info, and a weekly progress bar (target: 2 runs/week).
+
+### Mobile Navigation
+
+`navigation.js` exports `initMobileNav()` which adds a collapsible hamburger menu for mobile viewports. The hamburger button (`.nav-toggle`) animates between three lines and an X. The menu auto-closes on link click or outside tap. Styles are in `css/layout.css`.
+
+### CSS Structure
+
+```
+css/
+├── main.css          # CSS custom properties, typography, global styles
+├── layout.css        # Navigation bar, hamburger menu, responsive breakpoints, grid
+└── components.css    # Buttons, forms, cards, modals, charts, error states
+```
+
+### Date Formatting
+
+Dates are displayed in **UK format** (D/M/YY for short dates). `formatDate(date, 'short')` in `js/utils/date.js` returns e.g. `12/1/26` (12 January 2026). Long format remains `Jan 12, 2026`. All dates are stored as ISO strings regardless of display format.
 
 ## Development Workflow
 
@@ -222,7 +255,14 @@ if (e.name === 'QuotaExceededError') {
 
 ## Chart.js Integration
 
-Uses Chart.js v4.4.1 (loaded via CDN in index.html:314). This specific version is pinned for stability. Charts are rendered in `<canvas>` elements and initialized when the view loads.
+Uses Chart.js v4.4.1 (loaded via CDN in index.html). This specific version is pinned for stability. Charts are rendered in `<canvas>` elements and initialized when the view loads.
+
+**Chart types across views:**
+- **Weekly mileage** (progress.js) — bar chart of distance per training week
+- **Monthly summary** (progress.js) — bar chart of distance per month
+- **Pace trend** (progress.js) — line chart of pace over time
+- **Run type distribution** (progress.js) — doughnut chart of run type counts
+- **Weight trend** (weight.js) — line chart of weight entries over time
 
 **Important:** Destroy existing chart instances before creating new ones to avoid memory leaks:
 ```javascript
@@ -255,13 +295,16 @@ location.reload();
 - **Week numbers are 1-indexed:** Week 1 starts on `trainingPlanStart`, not week 0
 - **ES6 modules require server:** File paths must be served over HTTP(S) for imports to work
 - **Chart.js must be loaded:** Check Network tab if charts don't render (CDN may be blocked)
+- **UK date display format:** Short dates render as D/M/YY (UK), not M/D/YY (US). Storage is always ISO (YYYY-MM-DD)
+- **Heart rate is optional:** The `heartRate` field may be `null` or absent on older runs — always check before displaying
 
 ## Data Export/Import
 
-**UI-based export/import:** The dashboard page includes export/import buttons (dashboard.js:309-435):
-- Export creates a timestamped JSON file download
-- Import validates structure before replacing data
-- Both operations include user confirmations for safety
+**UI-based export/import:** The dashboard page includes export/import buttons:
+- **JSON export** creates a timestamped JSON file download of all data
+- **CSV export** (`exportRunsAsCSV()`) exports runs as a CSV file (includes heart rate column)
+- **Import** validates structure before replacing data
+- Both export formats and import include user confirmations for safety
 
 **Manual via DevTools Console:**
 
