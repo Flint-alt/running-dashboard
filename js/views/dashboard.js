@@ -563,10 +563,43 @@ function handleRecentRunsClick(event) {
 }
 
 /**
- * Create HTML for a run card
- * @param {Object} run - Run object
- * @returns {string} HTML string
+ * Generate a sparkline SVG for pace trend of recent runs of the same type
+ * @param {Object} run - The current run
+ * @param {string} color - The color for the sparkline
+ * @returns {string} SVG HTML string or empty string
  */
+function generatePaceSparkline(run, color) {
+    const allRuns = getRuns().reverse(); // oldest first
+    const sameTypeRuns = allRuns.filter(r => r.type === run.type && r.pace > 0);
+
+    if (sameTypeRuns.length < 2) return '';
+
+    // Get last 8 runs of this type (including current)
+    const recentRuns = sameTypeRuns.slice(-8);
+    const paces = recentRuns.map(r => r.pace);
+
+    const width = 60;
+    const height = 24;
+    const padding = 2;
+
+    const minPace = Math.min(...paces);
+    const maxPace = Math.max(...paces);
+    const range = maxPace - minPace || 1;
+
+    const points = paces.map((pace, i) => {
+        const x = padding + (i / (paces.length - 1)) * (width - padding * 2);
+        // Invert Y: lower pace = better = higher on chart
+        const y = padding + ((pace - minPace) / range) * (height - padding * 2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    return `
+        <svg class="pace-sparkline" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7" />
+            <circle cx="${paces.length > 1 ? (padding + ((paces.length - 1) / (paces.length - 1)) * (width - padding * 2)).toFixed(1) : padding}" cy="${(padding + ((paces[paces.length - 1] - minPace) / range) * (height - padding * 2)).toFixed(1)}" r="2" fill="${color}" />
+        </svg>`;
+}
+
 function createRunCard(run) {
     const runTypeColors = {
         parkrun: '#2563eb',
@@ -578,6 +611,7 @@ function createRunCard(run) {
     };
 
     const typeColor = runTypeColors[run.type] || '#6b7280';
+    const sparkline = generatePaceSparkline(run, typeColor);
 
     // Escape HTML in notes to prevent XSS
     const safeNotes = run.notes ? run.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
@@ -602,7 +636,7 @@ function createRunCard(run) {
                     </div>
                     <div class="run-stat">
                         <span class="run-stat-label">Pace</span>
-                        <span class="run-stat-value">${formatPace(run.pace)}</span>
+                        <span class="run-stat-value">${formatPace(run.pace)}${sparkline}</span>
                     </div>
                     ${run.heartRate ? `
                     <div class="run-stat">

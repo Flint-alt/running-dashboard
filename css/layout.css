@@ -557,6 +557,14 @@
 .run-stat-value {
     font-weight: 600;
     font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.pace-sparkline {
+    flex-shrink: 0;
+    vertical-align: middle;
 }
 
 /* ===== Weekly Calendar Strip ===== */
