@@ -94,6 +94,86 @@
     --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] {
+    --primary-color: #FBBF24;
+    --primary-dark: #F59E0B;
+    --primary-light: #FCD34D;
+    --primary-lighter: #FDE68A;
+
+    --accent-coral: #FF8A8A;
+    --accent-peach: #FFC9A8;
+    --accent-warm: #FFB899;
+
+    --text-primary: #f0f0f0;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    --text-light: #52525b;
+
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #181825;
+    --bg-tertiary: #252538;
+    --bg-warm: #2a2a3d;
+
+    --glass-bg: rgba(30, 30, 46, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+
+    --border-color: #3a3a50;
+    --border-color-dark: #4a4a62;
+    --border-color-darker: #5a5a72;
+
+    --gradient-primary: linear-gradient(135deg, #FF8A8A 0%, #FFC9A8 100%);
+    --gradient-warm: linear-gradient(135deg, #FFB899 0%, #FDE68A 100%);
+    --gradient-card: linear-gradient(145deg, #1e1e2e 0%, #252538 100%);
+    --gradient-nav: linear-gradient(135deg, #252538 0%, #2a2a3d 100%);
+
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 12px 24px -6px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(255, 138, 138, 0.2);
+}
+
+[data-theme="dark"] body {
+    background: linear-gradient(to bottom, var(--bg-secondary) 0%, #141420 100%);
+}
+
+[data-theme="dark"] body::before {
+    background:
+        radial-gradient(circle at 20% 50%, rgba(255, 138, 138, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(251, 191, 36, 0.03) 0%, transparent 50%);
+}
+
+[data-theme="dark"] select {
+    background-color: var(--bg-tertiary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a1a1aa' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea {
+    background-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .progress-ring-fill {
+    stroke: url(#progress-gradient-dark);
+}
+
+[data-theme="dark"] .run-item {
+    background-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .btn-edit-run,
+[data-theme="dark"] .btn-delete-run {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .btn-delete-run {
+    color: #f87171 !important;
+    border-color: #f87171 !important;
+}
+
 /* ===== Reset & Base Styles ===== */
 *, *::before, *::after {
     box-sizing: border-box;

@@ -90,6 +90,33 @@
     display: none;
 }
 
+/* ===== Theme Toggle ===== */
+.theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    color: var(--text-secondary);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+}
+
+.theme-toggle:hover {
+    color: var(--primary-color);
+    transform: rotate(15deg);
+}
+
+/* In light mode: show moon, hide sun */
+.theme-icon-sun { display: none; }
+.theme-icon-moon { display: block; }
+
+/* In dark mode: show sun, hide moon */
+[data-theme="dark"] .theme-icon-sun { display: block; }
+[data-theme="dark"] .theme-icon-moon { display: none; }
+
 /* ===== Mobile Navigation Toggle ===== */
 .nav-toggle {
     display: none; /* Hidden on desktop */

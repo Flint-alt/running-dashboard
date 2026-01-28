@@ -33,6 +33,9 @@ export function initRouter() {
     // Set up mobile navigation toggle
     initMobileNav();
 
+    // Set up dark mode toggle
+    initThemeToggle();
+
     console.log('Router initialized');
 }
 
@@ -153,4 +156,30 @@ export function getCurrentRoute() {
  */
 export function refreshCurrentPage() {
     handleRoute();
+}
+
+/**
+ * Initialize dark mode toggle
+ * Reads preference from localStorage and sets up the toggle button
+ */
+function initThemeToggle() {
+    const toggle = document.getElementById('theme-toggle');
+    if (!toggle) return;
+
+    // Apply saved preference on load
+    const saved = localStorage.getItem('runningDashboardTheme');
+    if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
+    toggle.addEventListener('click', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('runningDashboardTheme', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('runningDashboardTheme', 'dark');
+        }
+    });
 }
