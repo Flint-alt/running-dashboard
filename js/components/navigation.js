@@ -100,6 +100,12 @@ function handleRoute() {
     // Update navigation active state
     updateActiveNav(hash);
 
+    // Toggle FAB visibility (hide on log-run page)
+    const fab = document.getElementById('quick-log-fab');
+    if (fab) {
+        fab.classList.toggle('hidden', hash === 'log-run');
+    }
+
     // Call the route handler (updates the page content)
     const routeHandler = routes[hash];
     if (routeHandler) {
