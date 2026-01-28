@@ -391,6 +391,43 @@ tr:hover {
     color: var(--danger-color);
 }
 
+/* ===== Floating Action Button ===== */
+.fab {
+    position: fixed;
+    bottom: var(--spacing-xl);
+    right: var(--spacing-xl);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(255, 107, 107, 0.25);
+    transition: all var(--transition-base);
+    z-index: 50;
+    text-decoration: none;
+}
+
+.fab:hover {
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: var(--shadow-xl), 0 0 30px rgba(255, 107, 107, 0.35);
+    color: white;
+    text-decoration: none;
+}
+
+.fab:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+/* Hide FAB when on the log-run page */
+.fab.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.5);
+}
+
 /* ===== Responsive Form Adjustments ===== */
 @media (max-width: 480px) {
     .btn {

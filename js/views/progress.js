@@ -155,7 +155,13 @@ function renderMonthlyStats() {
     const container = document.getElementById('monthly-summary');
 
     if (monthlyStats.length === 0) {
-        container.innerHTML = '<p class="empty-state">No runs logged yet.</p>';
+        container.innerHTML = `
+            <div class="empty-state-enhanced">
+                <div class="empty-state-icon">&#128197;</div>
+                <div class="empty-state-title">No monthly data yet</div>
+                <div class="empty-state-message">Monthly breakdowns of your distance, runs, and pace will appear here as you log runs.</div>
+                <a href="#log-run" class="empty-state-action">Log a Run</a>
+            </div>`;
         return;
     }
 
@@ -205,7 +211,13 @@ function renderPaceTrendChart() {
     const runs = getRuns().reverse(); // Oldest to newest for trend
 
     if (runs.length === 0) {
-        canvas.parentElement.innerHTML = '<p class="empty-state">No runs logged yet.</p>';
+        canvas.parentElement.innerHTML = `
+            <div class="empty-state-enhanced">
+                <div class="empty-state-icon">&#128200;</div>
+                <div class="empty-state-title">No pace data yet</div>
+                <div class="empty-state-message">Your pace trend over time will be charted here as you log runs.</div>
+                <a href="#log-run" class="empty-state-action">Log a Run</a>
+            </div>`;
         return;
     }
 
@@ -304,7 +316,13 @@ function renderRunTypeChart() {
     const distribution = getRunTypeDistribution();
 
     if (Object.keys(distribution).length === 0) {
-        canvas.parentElement.innerHTML = '<p class="empty-state">No runs logged yet.</p>';
+        canvas.parentElement.innerHTML = `
+            <div class="empty-state-enhanced">
+                <div class="empty-state-icon">&#127912;</div>
+                <div class="empty-state-title">No run data yet</div>
+                <div class="empty-state-message">See how your training breaks down across parkruns, long runs, easy runs, and more.</div>
+                <a href="#log-run" class="empty-state-action">Log a Run</a>
+            </div>`;
         return;
     }
 

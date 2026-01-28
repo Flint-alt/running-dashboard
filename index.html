@@ -12,10 +12,40 @@
     <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
+    <!-- SVG Gradient Definitions -->
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#FF6B6B" />
+                <stop offset="100%" stop-color="#FFB088" />
+            </linearGradient>
+            <linearGradient id="progress-gradient-dark" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#FF8A8A" />
+                <stop offset="100%" stop-color="#FFC9A8" />
+            </linearGradient>
+        </defs>
+    </svg>
+
     <!-- Main Navigation -->
     <nav class="main-nav">
         <div class="nav-container">
             <h1 class="app-title">Running Dashboard</h1>
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                <svg class="theme-icon theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg class="theme-icon theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
             <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
                 <span class="hamburger"></span>
             </button>
@@ -51,17 +81,31 @@
                 <div class="card current-week-card">
                     <h3>Current Week</h3>
                     <div id="current-week-info">
-                        <div class="week-number">Week <span id="week-num">-</span></div>
-                        <div class="week-dates" id="week-dates">-</div>
-                        <div class="phase-badge" id="phase-badge">-</div>
-                        <div class="planned-runs">
-                            <div class="planned-run">
-                                <span class="run-label">Parkrun:</span>
-                                <span id="planned-parkrun">5 km</span>
+                        <div class="current-week-layout">
+                            <div class="progress-ring-container">
+                                <svg class="progress-ring" viewBox="0 0 120 120">
+                                    <circle class="progress-ring-bg" cx="60" cy="60" r="52" />
+                                    <circle class="progress-ring-fill" id="progress-ring-fill" cx="60" cy="60" r="52" />
+                                </svg>
+                                <div class="progress-ring-label">
+                                    <span class="progress-ring-week" id="week-num">-</span>
+                                    <span class="progress-ring-of">of 44</span>
+                                </div>
                             </div>
-                            <div class="planned-run">
-                                <span class="run-label">Long Run:</span>
-                                <span id="planned-long-run">- km</span>
+                            <div class="current-week-details">
+                                <div class="week-dates" id="week-dates">-</div>
+                                <div class="phase-badge" id="phase-badge">-</div>
+                                <div id="progress-ring-percent" class="progress-ring-percent"></div>
+                                <div class="planned-runs">
+                                    <div class="planned-run">
+                                        <span class="run-label">Parkrun:</span>
+                                        <span id="planned-parkrun">5 km</span>
+                                    </div>
+                                    <div class="planned-run">
+                                        <span class="run-label">Long Run:</span>
+                                        <span id="planned-long-run">- km</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -71,17 +115,20 @@
                 <div class="card weight-progress-card">
                     <h3>Weight Progress</h3>
                     <div id="weight-summary">
-                        <div class="weight-stat">
-                            <span class="stat-label">Current:</span>
-                            <span class="stat-value" id="current-weight">74.5 kg</span>
+                        <div class="hero-stat">
+                            <span class="hero-stat-value" id="current-weight">74.5</span>
+                            <span class="hero-stat-unit">kg</span>
                         </div>
-                        <div class="weight-stat">
-                            <span class="stat-label">Goal:</span>
-                            <span class="stat-value">65 kg</span>
-                        </div>
-                        <div class="weight-stat">
-                            <span class="stat-label">Lost:</span>
-                            <span class="stat-value" id="weight-lost">0 kg</span>
+                        <div class="hero-stat-label">current weight</div>
+                        <div class="weight-sub-stats">
+                            <div class="weight-sub-stat">
+                                <span class="weight-sub-value">65 kg</span>
+                                <span class="weight-sub-label">goal</span>
+                            </div>
+                            <div class="weight-sub-stat">
+                                <span class="weight-sub-value" id="weight-lost">0.0 kg</span>
+                                <span class="weight-sub-label">lost</span>
+                            </div>
                         </div>
                         <div class="progress-bar">
                             <div class="progress-fill" id="weight-progress"></div>
@@ -93,14 +140,15 @@
                 <div class="card streak-card">
                     <h3>Run Streak 🔥</h3>
                     <div id="run-streak">
-                        <div class="streak-current" style="margin-bottom: var(--spacing-md);">
-                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Current Streak</div>
-                            <div style="font-size: var(--font-size-xxl); font-weight: 700; color: var(--primary-color);" id="streak-current">0</div>
-                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary);">weeks</div>
+                        <div class="streak-current">
+                            <div class="hero-stat">
+                                <span class="hero-stat-value" id="streak-current">0</span>
+                            </div>
+                            <div class="hero-stat-label">week streak</div>
                         </div>
-                        <div class="streak-longest" style="padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">
-                            <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Longest Streak</div>
-                            <div style="font-size: var(--font-size-lg); font-weight: 600; color: var(--secondary-color);" id="streak-longest">0 weeks</div>
+                        <div class="streak-longest">
+                            <span class="streak-longest-label">Longest:</span>
+                            <span class="streak-longest-value" id="streak-longest">0 weeks</span>
                         </div>
                     </div>
                 </div>
@@ -162,7 +210,12 @@
                 <div class="card personal-records-card full-width">
                     <h3>🏆 Personal Records</h3>
                     <div id="personal-records">
-                        <p class="empty-state">No runs logged yet.</p>
+                        <div class="empty-state-enhanced">
+                            <div class="empty-state-icon">&#127942;</div>
+                            <div class="empty-state-title">No personal records yet</div>
+                            <div class="empty-state-message">Your fastest times and longest distances will appear here once you start logging runs.</div>
+                            <a href="#log-run" class="empty-state-action">Log Your First Run</a>
+                        </div>
                     </div>
                 </div>
 
@@ -184,7 +237,12 @@
                         </div>
                     </div>
                     <div id="recent-runs">
-                        <p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>
+                        <div class="empty-state-enhanced">
+                            <div class="empty-state-icon">&#127939;</div>
+                            <div class="empty-state-title">No runs logged yet</div>
+                            <div class="empty-state-message">Record your training sessions to track your progress here.</div>
+                            <a href="#log-run" class="empty-state-action">Log Your First Run</a>
+                        </div>
                     </div>
                 </div>
 
@@ -341,7 +399,12 @@
                 <div class="card monthly-stats-card full-width">
                     <h3>Monthly Summary</h3>
                     <div id="monthly-summary">
-                        <p class="empty-state">No runs logged yet.</p>
+                        <div class="empty-state-enhanced">
+                            <div class="empty-state-icon">&#128197;</div>
+                            <div class="empty-state-title">No monthly data yet</div>
+                            <div class="empty-state-message">Monthly breakdowns of your distance, runs, and pace will appear here as you log runs.</div>
+                            <a href="#log-run" class="empty-state-action">Log a Run</a>
+                        </div>
                     </div>
                 </div>
 
@@ -408,6 +471,14 @@
         </section>
 
     </main>
+
+    <!-- Quick Log FAB -->
+    <a href="#log-run" class="fab" id="quick-log-fab" aria-label="Log a run">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </a>
 
     <!-- Milestone Celebration Modal -->
     <div id="milestone-modal-overlay" class="modal-overlay" style="display: none;">

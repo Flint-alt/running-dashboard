@@ -90,6 +90,33 @@
     display: none;
 }
 
+/* ===== Theme Toggle ===== */
+.theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    color: var(--text-secondary);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+}
+
+.theme-toggle:hover {
+    color: var(--primary-color);
+    transform: rotate(15deg);
+}
+
+/* In light mode: show moon, hide sun */
+.theme-icon-sun { display: none; }
+.theme-icon-moon { display: block; }
+
+/* In dark mode: show sun, hide moon */
+[data-theme="dark"] .theme-icon-sun { display: block; }
+[data-theme="dark"] .theme-icon-moon { display: none; }
+
 /* ===== Mobile Navigation Toggle ===== */
 .nav-toggle {
     display: none; /* Hidden on desktop */
@@ -225,6 +252,77 @@
 }
 
 /* Current Week Card */
+.current-week-layout {
+    display: flex;
+    gap: var(--spacing-lg);
+    align-items: flex-start;
+}
+
+.progress-ring-container {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    flex-shrink: 0;
+}
+
+.progress-ring {
+    width: 110px;
+    height: 110px;
+    transform: rotate(-90deg);
+}
+
+.progress-ring-bg {
+    fill: none;
+    stroke: var(--border-color);
+    stroke-width: 8;
+}
+
+.progress-ring-fill {
+    fill: none;
+    stroke: url(#progress-gradient);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 326.73;
+    stroke-dashoffset: 326.73;
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-ring-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+}
+
+.progress-ring-week {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.progress-ring-of {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.progress-ring-percent {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-top: var(--spacing-xs);
+}
+
+.current-week-details {
+    flex: 1;
+    min-width: 0;
+}
+
 .current-week-card .week-number {
     font-size: var(--font-size-2xl);
     font-weight: 700;
@@ -235,11 +333,11 @@
 .current-week-card .week-dates {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
 }
 
 .current-week-card .planned-runs {
-    margin-top: var(--spacing-md);
+    margin-top: var(--spacing-sm);
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
@@ -257,20 +355,98 @@
     color: var(--text-secondary);
 }
 
-/* Weight Progress Card */
-.weight-progress-card .weight-stat {
+/* Hero Stat - large focal number used across cards */
+.hero-stat {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-sm);
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    line-height: 1;
 }
 
-.weight-progress-card .stat-label {
+.hero-stat-value {
+    font-size: var(--font-size-4xl);
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+.hero-stat-unit {
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    color: var(--text-tertiary);
+}
+
+.hero-stat-label {
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    margin-top: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+/* Weight Progress Card */
+.weight-progress-card {
+    text-align: center;
+}
+
+.weight-sub-stats {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
+}
+
+.weight-sub-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.weight-sub-value {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+.weight-sub-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Streak Card */
+.streak-card {
+    text-align: center;
+}
+
+.streak-card .streak-current {
+    margin-bottom: var(--spacing-md);
+}
+
+.streak-longest {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.streak-longest-label {
+    font-size: var(--font-size-sm);
     color: var(--text-secondary);
 }
 
-.weight-progress-card .stat-value {
+.streak-longest-value {
+    font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--secondary-color);
 }
 
 /* Milestone Card */
@@ -381,6 +557,138 @@
 .run-stat-value {
     font-weight: 600;
     font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.pace-sparkline {
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* ===== Weekly Calendar Strip ===== */
+.weekly-calendar-card {
+    padding: var(--spacing-lg) var(--spacing-xl);
+}
+
+.weekly-calendar-card:hover {
+    transform: none;
+}
+
+.calendar-strip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.calendar-strip-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.calendar-strip-week {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.calendar-strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.calendar-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-xs);
+    border-radius: var(--radius-md);
+    transition: background-color var(--transition-fast);
+    position: relative;
+}
+
+.calendar-day.is-today {
+    background-color: var(--bg-tertiary);
+    box-shadow: inset 0 0 0 2px var(--primary-color);
+}
+
+.calendar-day-name {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.calendar-day-date {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.calendar-day-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    transition: all var(--transition-base);
+    margin-top: 2px;
+}
+
+.calendar-day.has-run .calendar-day-indicator {
+    width: 12px;
+    height: 12px;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-parkrun {
+    background-color: #2563eb;
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-long {
+    background-color: #ec4899;
+    box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-easy {
+    background-color: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-tempo {
+    background-color: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-intervals {
+    background-color: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-recovery {
+    background-color: #8b5cf6;
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+
+.calendar-day-distance {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    min-height: 1rem;
+}
+
+.calendar-day.is-future .calendar-day-name,
+.calendar-day.is-future .calendar-day-date {
+    opacity: 0.5;
 }
 
 /* ===== Weekly Calendar Strip ===== */

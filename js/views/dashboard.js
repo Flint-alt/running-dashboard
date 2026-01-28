@@ -12,6 +12,40 @@ import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
 let currentRunTypeFilter = 'all';
 
 /**
+ * Animate a numeric value from 0 to target over a duration.
+ * @param {HTMLElement} el - Element to update
+ * @param {number} target - Target value
+ * @param {Object} options - { duration, decimals, suffix, prefix }
+ */
+function animateValue(el, target, options = {}) {
+    const { duration = 500, decimals = 0, suffix = '', prefix = '' } = options;
+    const start = 0;
+    const startTime = performance.now();
+
+    // Skip animation for zero values
+    if (target === 0) {
+        el.textContent = `${prefix}${target.toFixed(decimals)}${suffix}`;
+        return;
+    }
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // Ease-out cubic for a natural deceleration feel
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = start + (target - start) * eased;
+
+        el.textContent = `${prefix}${current.toFixed(decimals)}${suffix}`;
+
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+
+    requestAnimationFrame(update);
+}
+
+/**
  * Initialize dashboard on app load
  */
 export function initDashboard() {
@@ -121,25 +155,29 @@ function updateCurrentWeek() {
     const phaseBadgeEl = document.getElementById('phase-badge');
     const plannedParkrunEl = document.getElementById('planned-parkrun');
     const plannedLongRunEl = document.getElementById('planned-long-run');
+    const progressRingFill = document.getElementById('progress-ring-fill');
+    const progressPercentEl = document.getElementById('progress-ring-percent');
 
     // Handle case where we're before plan starts or after plan ends
     if (currentWeek < 1) {
-        weekNumEl.textContent = 'Not Started';
+        weekNumEl.textContent = '-';
         weekDatesEl.textContent = 'Training begins Jan 5, 2026';
         phaseBadgeEl.textContent = 'Upcoming';
         phaseBadgeEl.className = 'phase-badge';
         plannedParkrunEl.textContent = '-';
         plannedLongRunEl.textContent = '-';
+        updateProgressRing(progressRingFill, progressPercentEl, 0);
         return;
     }
 
     if (currentWeek > 44) {
-        weekNumEl.textContent = 'Complete!';
+        weekNumEl.textContent = '44';
         weekDatesEl.textContent = 'Training plan finished';
         phaseBadgeEl.textContent = 'Done';
         phaseBadgeEl.className = 'phase-badge';
         plannedParkrunEl.textContent = '-';
         plannedLongRunEl.textContent = '-';
+        updateProgressRing(progressRingFill, progressPercentEl, 100);
         return;
     }
 
@@ -148,6 +186,10 @@ function updateCurrentWeek() {
 
     weekNumEl.textContent = currentWeek;
     weekDatesEl.textContent = weekPlan.dateRange.formatted;
+
+    // Update progress ring
+    const percent = Math.round((currentWeek / 44) * 100);
+    updateProgressRing(progressRingFill, progressPercentEl, percent);
 
     // Set phase badge
     phaseBadgeEl.textContent = `Phase ${weekPlan.phase.id}`;
@@ -174,6 +216,22 @@ function updateCurrentWeek() {
 }
 
 /**
+ * Update the SVG progress ring fill and percentage label
+ */
+function updateProgressRing(fillEl, percentEl, percent) {
+    if (!fillEl) return;
+    const circumference = 2 * Math.PI * 52; // r=52
+    const offset = circumference - (percent / 100) * circumference;
+    // Animate after a brief delay so the transition is visible on page load
+    requestAnimationFrame(() => {
+        fillEl.style.strokeDashoffset = offset;
+    });
+    if (percentEl) {
+        percentEl.textContent = `${percent}% complete`;
+    }
+}
+
+/**
  * Update weight progress card
  */
 function updateWeightProgress() {
@@ -181,8 +239,8 @@ function updateWeightProgress() {
     const weightLost = getWeightLost();
     const progress = getWeightProgress();
 
-    document.getElementById('current-weight').textContent = `${currentWeight.toFixed(1)} kg`;
-    document.getElementById('weight-lost').textContent = `${weightLost.toFixed(1)} kg`;
+    animateValue(document.getElementById('current-weight'), currentWeight, { decimals: 1, duration: 600 });
+    animateValue(document.getElementById('weight-lost'), weightLost, { decimals: 1, suffix: ' kg', duration: 600 });
 
     const progressBar = document.getElementById('weight-progress');
     progressBar.style.width = `${progress}%`;
@@ -197,7 +255,7 @@ function updateRunStreak() {
     const currentEl = document.getElementById('streak-current');
     const longestEl = document.getElementById('streak-longest');
 
-    currentEl.textContent = streak.current;
+    animateValue(currentEl, streak.current, { duration: 600 });
 
     if (streak.longest === 1) {
         longestEl.textContent = '1 week';
@@ -205,13 +263,16 @@ function updateRunStreak() {
         longestEl.textContent = `${streak.longest} weeks`;
     }
 
-    // Add motivational message for streaks
-    if (streak.current >= 12) {
-        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Amazing Streak! 🔥';
-    } else if (streak.current >= 4) {
-        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Great Streak! 🔥';
-    } else {
-        currentEl.parentElement.querySelector('.streak-current > div:first-child').textContent = 'Current Streak';
+    // Update the hero label with motivational message for streaks
+    const heroLabel = document.querySelector('.streak-current .hero-stat-label');
+    if (heroLabel) {
+        if (streak.current >= 12) {
+            heroLabel.textContent = 'amazing streak!';
+        } else if (streak.current >= 4) {
+            heroLabel.textContent = 'great streak!';
+        } else {
+            heroLabel.textContent = 'week streak';
+        }
     }
 }
 
@@ -325,8 +386,8 @@ function updateWeekSummary() {
     }
 
     // Update display
-    document.getElementById('week-distance').textContent = `${totalDistance.toFixed(1)} km`;
-    document.getElementById('week-runs').textContent = runCount;
+    animateValue(document.getElementById('week-distance'), totalDistance, { decimals: 1, suffix: ' km', duration: 600 });
+    animateValue(document.getElementById('week-runs'), runCount, { duration: 400 });
     document.getElementById('week-gym').textContent = gymSessions > 0 ? `✓ (${gymSessions})` : '-';
     document.getElementById('week-bodyweight').textContent = bodyweightSessions > 0 ? `✓ (${bodyweightSessions})` : '-';
 }
@@ -339,7 +400,13 @@ function updatePersonalRecords() {
     const container = document.getElementById('personal-records');
 
     if (!records.longestRun) {
-        container.innerHTML = '<p class="empty-state">No runs logged yet.</p>';
+        container.innerHTML = `
+            <div class="empty-state-enhanced">
+                <div class="empty-state-icon">&#127942;</div>
+                <div class="empty-state-title">No personal records yet</div>
+                <div class="empty-state-message">Your fastest times and longest distances will appear here once you start logging runs.</div>
+                <a href="#log-run" class="empty-state-action">Log Your First Run</a>
+            </div>`;
         return;
     }
 
@@ -409,9 +476,28 @@ function updateRecentRuns() {
 
     if (runs.length === 0) {
         if (currentRunTypeFilter === 'all') {
-            container.innerHTML = '<p class="empty-state">No runs logged yet. <a href="#log-run">Log your first run!</a></p>';
+            const settings = getSettings();
+            const today = getTodayISO();
+            const currentWeek = getCurrentWeek(today, settings.trainingPlanStart);
+            const weekPlan = getWeekPlan(currentWeek);
+            let hint = '';
+            if (weekPlan) {
+                hint = `Week ${currentWeek} has a ${weekPlan.parkrun}km parkrun and a ${weekPlan.longRun}km long run planned.`;
+            }
+            container.innerHTML = `
+                <div class="empty-state-enhanced">
+                    <div class="empty-state-icon">&#127939;</div>
+                    <div class="empty-state-title">No runs logged yet</div>
+                    <div class="empty-state-message">${hint ? hint + ' ' : ''}Record your training sessions to track your progress here.</div>
+                    <a href="#log-run" class="empty-state-action">Log Your First Run</a>
+                </div>`;
         } else {
-            container.innerHTML = `<p class="empty-state">No ${currentRunTypeFilter} runs found.</p>`;
+            container.innerHTML = `
+                <div class="empty-state-enhanced">
+                    <div class="empty-state-icon">&#128269;</div>
+                    <div class="empty-state-title">No ${currentRunTypeFilter} runs found</div>
+                    <div class="empty-state-message">Try a different filter or log a ${currentRunTypeFilter} run.</div>
+                </div>`;
         }
         return;
     }
@@ -477,10 +563,43 @@ function handleRecentRunsClick(event) {
 }
 
 /**
- * Create HTML for a run card
- * @param {Object} run - Run object
- * @returns {string} HTML string
+ * Generate a sparkline SVG for pace trend of recent runs of the same type
+ * @param {Object} run - The current run
+ * @param {string} color - The color for the sparkline
+ * @returns {string} SVG HTML string or empty string
  */
+function generatePaceSparkline(run, color) {
+    const allRuns = getRuns().reverse(); // oldest first
+    const sameTypeRuns = allRuns.filter(r => r.type === run.type && r.pace > 0);
+
+    if (sameTypeRuns.length < 2) return '';
+
+    // Get last 8 runs of this type (including current)
+    const recentRuns = sameTypeRuns.slice(-8);
+    const paces = recentRuns.map(r => r.pace);
+
+    const width = 60;
+    const height = 24;
+    const padding = 2;
+
+    const minPace = Math.min(...paces);
+    const maxPace = Math.max(...paces);
+    const range = maxPace - minPace || 1;
+
+    const points = paces.map((pace, i) => {
+        const x = padding + (i / (paces.length - 1)) * (width - padding * 2);
+        // Invert Y: lower pace = better = higher on chart
+        const y = padding + ((pace - minPace) / range) * (height - padding * 2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    return `
+        <svg class="pace-sparkline" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7" />
+            <circle cx="${paces.length > 1 ? (padding + ((paces.length - 1) / (paces.length - 1)) * (width - padding * 2)).toFixed(1) : padding}" cy="${(padding + ((paces[paces.length - 1] - minPace) / range) * (height - padding * 2)).toFixed(1)}" r="2" fill="${color}" />
+        </svg>`;
+}
+
 function createRunCard(run) {
     const runTypeColors = {
         parkrun: '#2563eb',
@@ -492,6 +611,7 @@ function createRunCard(run) {
     };
 
     const typeColor = runTypeColors[run.type] || '#6b7280';
+    const sparkline = generatePaceSparkline(run, typeColor);
 
     // Escape HTML in notes to prevent XSS
     const safeNotes = run.notes ? run.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
@@ -516,7 +636,7 @@ function createRunCard(run) {
                     </div>
                     <div class="run-stat">
                         <span class="run-stat-label">Pace</span>
-                        <span class="run-stat-value">${formatPace(run.pace)}</span>
+                        <span class="run-stat-value">${formatPace(run.pace)}${sparkline}</span>
                     </div>
                     ${run.heartRate ? `
                     <div class="run-stat">
