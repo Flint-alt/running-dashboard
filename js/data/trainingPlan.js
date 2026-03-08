@@ -91,13 +91,13 @@ export const WEEKLY_PLAN = [
     { week: 36, longRun: 14, parkrun: 5, isRecovery: true },   // Recovery (End Phase 3)
 
     // Phase 4: Weeks 37-44 (Race Prep & Taper)
-    { week: 37, longRun: 18, parkrun: 5, isRecovery: false },
-    { week: 38, longRun: 19, parkrun: 5, isRecovery: false },
-    { week: 39, longRun: 15, parkrun: 5, isRecovery: true },   // Recovery
-    { week: 40, longRun: 18, parkrun: 5, isRecovery: false },
-    { week: 41, longRun: 16, parkrun: 5, isRecovery: false },  // Taper begins
-    { week: 42, longRun: 13, parkrun: 5, isRecovery: false },  // Taper
-    { week: 43, longRun: 10, parkrun: 5, isRecovery: false },  // Taper
+    { week: 37, longRun: 18, parkrun: 5, isRecovery: false },  // Confidence run
+    { week: 38, longRun: 16, parkrun: 5, isRecovery: false },  // Taper begins
+    { week: 39, longRun: 13, parkrun: 5, isRecovery: false },  // Taper
+    { week: 40, longRun: 11, parkrun: 5, isRecovery: true },   // Recovery/Taper
+    { week: 41, longRun: 9, parkrun: 5, isRecovery: false },   // Taper
+    { week: 42, longRun: 7, parkrun: 5, isRecovery: false },   // Taper
+    { week: 43, longRun: 5, parkrun: 5, isRecovery: false },   // Race week shakeout
     { week: 44, longRun: 21.1, parkrun: 3, isRecovery: false } // RACE DAY! (easy 3k earlier in week)
 ];
 
