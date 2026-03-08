@@ -608,7 +608,8 @@ function createRunCard(run) {
         easy: '#10b981',
         tempo: '#f59e0b',
         intervals: '#ef4444',
-        recovery: '#8b5cf6'
+        recovery: '#8b5cf6',
+        treadmill: '#06b6d4'
     };
 
     const typeColor = runTypeColors[run.type] || '#6b7280';

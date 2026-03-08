@@ -95,6 +95,7 @@ function inferRunType(name, distanceKm) {
     const nameLower = (name || '').toLowerCase();
 
     if (nameLower.includes('parkrun') || nameLower.includes('park run')) return 'parkrun';
+    if (nameLower.includes('treadmill') || nameLower.includes('indoor')) return 'treadmill';
     if (nameLower.includes('interval') || nameLower.includes('speed') || nameLower.includes('track')) return 'intervals';
     if (nameLower.includes('tempo')) return 'tempo';
     if (nameLower.includes('recovery')) return 'recovery';
@@ -164,7 +165,9 @@ export function parseStravaCSV(csvText) {
         const heartRate = (!isNaN(heartRateRaw) && heartRateRaw > 0) ? heartRateRaw : undefined;
 
         const activityName = row['Activity Name'] || '';
-        const runType = inferRunType(activityName, distanceKm);
+        const runType = activityType === 'Treadmill' && !activityName.toLowerCase().includes('parkrun')
+            ? 'treadmill'
+            : inferRunType(activityName, distanceKm);
 
         // Calculate training week (null if outside plan range)
         const week = getCurrentWeek(date, planStart);

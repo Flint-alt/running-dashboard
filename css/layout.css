@@ -678,6 +678,11 @@
     box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
 }
 
+.calendar-day.has-run .calendar-day-indicator.type-treadmill {
+    background-color: #06b6d4;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+}
+
 .calendar-day-distance {
     font-size: 0.6875rem;
     font-weight: 600;
@@ -800,6 +805,11 @@
 .calendar-day.has-run .calendar-day-indicator.type-recovery {
     background-color: #8b5cf6;
     box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+
+.calendar-day.has-run .calendar-day-indicator.type-treadmill {
+    background-color: #06b6d4;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
 }
 
 .calendar-day-distance {
