@@ -9,6 +9,7 @@ import { initLogRun } from '../views/logRun.js';
 import { initProgress } from '../views/progress.js';
 import { initWeight } from '../views/weight.js';
 import { initTrainingPlan } from '../views/trainingPlan.js';
+import { initSettings } from '../views/settings.js';
 
 // Route handlers - functions to call when navigating to each page
 const routes = {
@@ -16,7 +17,8 @@ const routes = {
     'training-plan': initTrainingPlan,
     'log-run': initLogRun,
     'progress': initProgress,
-    'weight': initWeight
+    'weight': initWeight,
+    'settings': initSettings
 };
 
 /**

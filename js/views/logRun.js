@@ -58,6 +58,10 @@ export function initLogRun() {
     timeInput.removeEventListener('input', debouncedUpdatePaceCalculation);
     form.removeEventListener('submit', handleFormSubmit);
 
+    const typeSelect = document.getElementById('run-type');
+    typeSelect.removeEventListener('change', handleRunTypeChange);
+    typeSelect.addEventListener('change', handleRunTypeChange);
+
     // Calculate pace when distance or time changes (debounced for performance)
     distanceInput.addEventListener('input', debouncedUpdatePaceCalculation);
     timeInput.addEventListener('input', debouncedUpdatePaceCalculation);
@@ -65,8 +69,30 @@ export function initLogRun() {
     // Handle form submission
     form.addEventListener('submit', handleFormSubmit);
 
+    // Apply correct visibility for current type
+    handleRunTypeChange({ target: typeSelect });
+
     // Initial pace calculation (immediate, no debounce)
     updatePaceCalculation();
+}
+
+/**
+ * Toggle missed-run vs normal-run fields based on selected run type
+ * @param {Event} event - Change event from run-type select
+ */
+function handleRunTypeChange(event) {
+    const isMissed = event.target.value === 'missed';
+    const distanceTimeGroup = document.getElementById('run-distance-time-group');
+    const missedReasonGroup = document.getElementById('missed-reason-group');
+
+    if (distanceTimeGroup) distanceTimeGroup.style.display = isMissed ? 'none' : 'block';
+    if (missedReasonGroup) missedReasonGroup.style.display = isMissed ? 'block' : 'none';
+
+    // Toggle required attributes on distance/time inputs
+    const distanceInput = document.getElementById('run-distance');
+    const timeInput = document.getElementById('run-time');
+    if (distanceInput) distanceInput.required = !isMissed;
+    if (timeInput) timeInput.required = !isMissed;
 }
 
 /**
@@ -129,10 +155,21 @@ function debouncedUpdatePaceCalculation() {
 function populateFormWithRun(run) {
     document.getElementById('run-date').value = run.date;
     document.getElementById('run-type').value = run.type;
-    document.getElementById('run-distance').value = run.distance;
-    document.getElementById('run-time').value = formatDuration(run.time);
-    document.getElementById('run-heart-rate').value = run.heartRate || '';
-    document.getElementById('run-notes').value = run.notes || '';
+
+    if (run.type === 'missed') {
+        // Populate reason from notes
+        const reasonSelect = document.getElementById('run-missed-reason');
+        if (reasonSelect && run.notes) {
+            const knownReasons = ['illness', 'weather', 'time', 'tired', 'travel', 'other'];
+            reasonSelect.value = knownReasons.includes(run.notes) ? run.notes : 'other';
+        }
+    } else {
+        document.getElementById('run-distance').value = run.distance;
+        document.getElementById('run-time').value = formatDuration(run.time);
+        document.getElementById('run-heart-rate').value = run.heartRate || '';
+    }
+
+    document.getElementById('run-notes').value = run.type === 'missed' ? '' : (run.notes || '');
     document.getElementById('gym-session').checked = run.gym || false;
     document.getElementById('bodyweight-session').checked = run.bodyweight || false;
 }
@@ -158,29 +195,51 @@ function handleFormSubmit(event) {
         return;
     }
 
-    // Calculate pace
-    const timeSeconds = parseTime(formData.time);
-    const pace = calculatePace(formData.distance, timeSeconds);
-
     // Get current training week
     const settings = getSettings();
     const week = getCurrentWeek(formData.date, settings.trainingPlanStart);
     const phase = getPhaseForWeek(week);
 
-    // Create run object
-    const run = {
-        date: formData.date,
-        type: formData.type,
-        distance: formData.distance,
-        time: timeSeconds,
-        pace: pace,
-        heartRate: formData.heartRate,
-        notes: formData.notes,
-        gym: formData.gym,
-        bodyweight: formData.bodyweight,
-        week: week,
-        phase: phase ? phase.name : 'N/A'
-    };
+    let run;
+
+    if (formData.type === 'missed') {
+        // Missed run: store reason in notes, no distance/time/pace
+        const reasonLabel = {
+            illness: 'illness', weather: 'weather', time: 'time',
+            tired: 'tired', travel: 'travel', other: 'other'
+        };
+        run = {
+            date: formData.date,
+            type: 'missed',
+            distance: 0,
+            time: 0,
+            pace: 0,
+            heartRate: null,
+            notes: formData.missedReason || 'other',
+            gym: formData.gym,
+            bodyweight: formData.bodyweight,
+            week: week,
+            phase: phase ? phase.name : 'N/A'
+        };
+    } else {
+        // Normal run
+        const timeSeconds = parseTime(formData.time);
+        const pace = calculatePace(formData.distance, timeSeconds);
+
+        run = {
+            date: formData.date,
+            type: formData.type,
+            distance: formData.distance,
+            time: timeSeconds,
+            pace: pace,
+            heartRate: formData.heartRate,
+            notes: formData.notes,
+            gym: formData.gym,
+            bodyweight: formData.bodyweight,
+            week: week,
+            phase: phase ? phase.name : 'N/A'
+        };
+    }
 
     // Check if we're editing an existing run
     const form = document.getElementById('log-run-form');
@@ -203,6 +262,9 @@ function handleFormSubmit(event) {
         document.getElementById('calculated-pace').textContent = '-';
         form.querySelector('button[type="submit"]').textContent = 'Log Run';
         delete form.dataset.editingRunId;
+        // Reset type-specific visibility
+        const typeSelect = document.getElementById('run-type');
+        handleRunTypeChange({ target: typeSelect });
 
         // Show milestone modal if a new milestone was achieved
         if (result.milestone) {
@@ -224,13 +286,15 @@ function handleFormSubmit(event) {
  */
 function getFormData() {
     const heartRateValue = document.getElementById('run-heart-rate').value;
+    const type = document.getElementById('run-type').value;
     return {
         date: document.getElementById('run-date').value,
-        type: document.getElementById('run-type').value,
+        type,
         distance: parseFloat(document.getElementById('run-distance').value),
         time: document.getElementById('run-time').value.trim(),
         heartRate: heartRateValue ? parseInt(heartRateValue, 10) : null,
         notes: document.getElementById('run-notes').value.trim(),
+        missedReason: document.getElementById('run-missed-reason')?.value || 'other',
         gym: document.getElementById('gym-session').checked,
         bodyweight: document.getElementById('bodyweight-session').checked
     };
@@ -254,6 +318,11 @@ function validateFormData(formData) {
     // Validate type
     if (!formData.type) {
         errors.push('Run type is required');
+    }
+
+    // Skip distance/time/pace validation for missed runs
+    if (formData.type === 'missed') {
+        return errors;
     }
 
     // Validate distance

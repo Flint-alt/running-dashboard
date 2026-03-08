@@ -22,6 +22,8 @@ export function initProgress() {
     renderMonthlyStats();
     renderPaceTrendChart();
     renderRunTypeChart();
+    renderHRZones();
+    renderAdherenceScore();
 }
 
 /**
@@ -387,4 +389,150 @@ function renderRunTypeChart() {
     } else {
         canvas.parentElement.innerHTML = '<p class="empty-state">Chart.js not loaded. Please refresh the page.</p>';
     }
+}
+
+/**
+ * Render heart rate zone analysis
+ * Uses configurable maxHeartRate from settings to calculate zones
+ */
+function renderHRZones() {
+    const container = document.getElementById('hr-zones-container');
+    if (!container) return;
+
+    const settings = getSettings();
+    const maxHR = settings.maxHeartRate || 185;
+    const runs = getRuns().filter(r => r.type !== 'missed' && r.heartRate && r.heartRate > 0);
+
+    if (runs.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-enhanced">
+                <div class="empty-state-icon">&#10084;</div>
+                <div class="empty-state-title">No heart rate data yet</div>
+                <div class="empty-state-message">Log runs with average heart rate to see zone breakdown.</div>
+                <a href="#log-run" class="empty-state-action">Log a Run</a>
+            </div>`;
+        return;
+    }
+
+    // Define 5 zones as % of max HR
+    const zones = [
+        { name: 'Zone 1 – Recovery',   min: 0,    max: 0.60, color: '#93c5fd', desc: '< 60%' },
+        { name: 'Zone 2 – Easy',       min: 0.60, max: 0.70, color: '#6ee7b7', desc: '60–70%' },
+        { name: 'Zone 3 – Aerobic',    min: 0.70, max: 0.80, color: '#fcd34d', desc: '70–80%' },
+        { name: 'Zone 4 – Threshold',  min: 0.80, max: 0.90, color: '#fb923c', desc: '80–90%' },
+        { name: 'Zone 5 – Max Effort', min: 0.90, max: 1.01, color: '#f87171', desc: '> 90%' }
+    ];
+
+    const counts = zones.map(zone => ({
+        ...zone,
+        count: runs.filter(r => {
+            const pct = r.heartRate / maxHR;
+            return pct >= zone.min && pct < zone.max;
+        }).length
+    }));
+
+    const totalWithHR = runs.length;
+
+    const barsHTML = counts.map(z => {
+        const pct = totalWithHR > 0 ? ((z.count / totalWithHR) * 100).toFixed(1) : 0;
+        return `
+            <div style="margin-bottom: var(--spacing-sm);">
+                <div style="display: flex; justify-content: space-between; font-size: var(--font-size-sm); margin-bottom: 4px;">
+                    <span style="font-weight: 600;">${z.name}</span>
+                    <span style="color: var(--text-secondary);">${z.count} run${z.count !== 1 ? 's' : ''} (${pct}%)</span>
+                </div>
+                <div style="background: var(--border-color); border-radius: var(--radius-sm); height: 14px; overflow: hidden;">
+                    <div style="width: ${pct}%; height: 100%; background: ${z.color}; transition: width 0.4s ease;"></div>
+                </div>
+            </div>`;
+    }).join('');
+
+    container.innerHTML = `
+        <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+            Based on ${totalWithHR} run${totalWithHR !== 1 ? 's' : ''} with HR data. Max HR: ${maxHR} bpm
+            (<a href="#settings" style="color: var(--primary-color);">change in Settings</a>).
+        </p>
+        ${barsHTML}`;
+}
+
+/**
+ * Render training adherence score (planned vs actual per week)
+ */
+function renderAdherenceScore() {
+    const container = document.getElementById('adherence-container');
+    if (!container) return;
+
+    const settings = getSettings();
+    const today = getTodayISO();
+    const currentWeek = getCurrentWeek(today, settings.trainingPlanStart);
+
+    if (currentWeek < 1) {
+        container.innerHTML = `
+            <div class="empty-state-enhanced">
+                <div class="empty-state-icon">&#128203;</div>
+                <div class="empty-state-title">Training hasn't started yet</div>
+                <div class="empty-state-message">Adherence scores will appear once your training plan begins.</div>
+            </div>`;
+        return;
+    }
+
+    const allRuns = getRuns().filter(r => r.type !== 'missed');
+    const maxWeek = Math.min(currentWeek, 44);
+    let totalPlanned = 0;
+    let totalActual = 0;
+    const weekRows = [];
+
+    for (let week = 1; week <= maxWeek; week++) {
+        const weekPlan = getWeekPlan(week);
+        const planned = weekPlan.totalDistance;
+        const actual = allRuns
+            .filter(r => r.week === week)
+            .reduce((sum, r) => sum + r.distance, 0);
+
+        totalPlanned += planned;
+        totalActual += actual;
+
+        const pct = planned > 0 ? Math.min((actual / planned) * 100, 100) : 0;
+        const barColor = pct >= 100 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
+
+        weekRows.push({ week, planned, actual, pct, barColor });
+    }
+
+    const overallPct = totalPlanned > 0
+        ? Math.min((totalActual / totalPlanned) * 100, 100).toFixed(1)
+        : 0;
+
+    const overallColor = overallPct >= 80 ? '#22c55e' : overallPct >= 50 ? '#f59e0b' : '#ef4444';
+
+    // Show last 12 weeks detail
+    const recentWeeks = weekRows.slice(-12);
+
+    const weeksHTML = recentWeeks.map(w => `
+        <div style="display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: 6px;">
+            <span style="font-size: var(--font-size-xs); color: var(--text-secondary); width: 48px; flex-shrink: 0;">Wk ${w.week}</span>
+            <div style="flex: 1; background: var(--border-color); border-radius: var(--radius-sm); height: 12px; overflow: hidden;">
+                <div style="width: ${w.pct}%; height: 100%; background: ${w.barColor}; transition: width 0.4s ease;"></div>
+            </div>
+            <span style="font-size: var(--font-size-xs); color: var(--text-secondary); width: 80px; flex-shrink: 0; text-align: right;">
+                ${w.actual.toFixed(1)}/${w.planned} km
+            </span>
+        </div>`).join('');
+
+    container.innerHTML = `
+        <div style="margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: var(--radius-md); border: 2px solid ${overallColor};">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xs);">
+                <span style="font-weight: 700; font-size: var(--font-size-lg);">Overall Adherence</span>
+                <span style="font-size: var(--font-size-xl); font-weight: 700; color: ${overallColor};">${overallPct}%</span>
+            </div>
+            <div style="background: white; border-radius: var(--radius-sm); height: 14px; overflow: hidden;">
+                <div style="width: ${overallPct}%; height: 100%; background: ${overallColor}; transition: width 0.4s ease;"></div>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--spacing-xs);">
+                ${totalActual.toFixed(1)} km of ${totalPlanned} km planned (weeks 1–${maxWeek})
+            </div>
+        </div>
+        <h4 style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-sm);">
+            Last ${recentWeeks.length} weeks
+        </h4>
+        ${weeksHTML}`;
 }
