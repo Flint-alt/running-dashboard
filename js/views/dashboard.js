@@ -3,7 +3,8 @@
  * Displays training overview, recent runs, and progress summary
  */
 
-import { getRuns, getRunsForWeek, getRun, deleteRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData, getRecords, getRunStreak, exportRunsAsCSV } from '../data/storage.js';
+import { getRuns, getRunsForWeek, getRun, deleteRun, saveRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData, getRecords, getRunStreak, exportRunsAsCSV } from '../data/storage.js';
+import { parseStravaCSV, deduplicateRuns } from '../utils/stravaImport.js';
 import { getTodayISO, getCurrentWeek, formatDate, formatDateRange, getWeekDateRange, addDays, parseDate } from '../utils/date.js';
 import { formatPace, formatDuration, formatDistance } from '../utils/pace.js';
 import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
@@ -726,18 +727,24 @@ function setupDataManagement() {
     const exportCSVButton = document.getElementById('btn-export-csv');
     const importButton = document.getElementById('btn-import-data');
     const fileInput = document.getElementById('import-file-input');
+    const stravaImportButton = document.getElementById('btn-import-strava');
+    const stravaFileInput = document.getElementById('strava-file-input');
 
     // Remove old listeners to prevent memory leaks
     exportButton.removeEventListener('click', handleExportData);
     exportCSVButton.removeEventListener('click', handleExportCSV);
     importButton.removeEventListener('click', handleImportButtonClick);
     fileInput.removeEventListener('change', handleFileSelected);
+    stravaImportButton.removeEventListener('click', handleStravaImportClick);
+    stravaFileInput.removeEventListener('change', handleStravaFileSelected);
 
     // Add event listeners
     exportButton.addEventListener('click', handleExportData);
     exportCSVButton.addEventListener('click', handleExportCSV);
     importButton.addEventListener('click', handleImportButtonClick);
     fileInput.addEventListener('change', handleFileSelected);
+    stravaImportButton.addEventListener('click', handleStravaImportClick);
+    stravaFileInput.addEventListener('change', handleStravaFileSelected);
 }
 
 /**
@@ -861,6 +868,93 @@ function handleFileSelected(event) {
     reader.onerror = () => {
         showImportStatus('Failed to read file. Please try again.', 'error');
         event.target.value = '';
+    };
+
+    reader.readAsText(file);
+}
+
+/**
+ * Handle Strava import button click — opens the CSV file picker
+ */
+function handleStravaImportClick() {
+    document.getElementById('strava-file-input').click();
+}
+
+/**
+ * Handle Strava CSV file selected for import
+ * Parses the file, deduplicates against existing runs, then saves new runs.
+ * @param {Event} event - Change event from file input
+ */
+function handleStravaFileSelected(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Reset file input so the same file can be re-selected if needed
+    event.target.value = '';
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        try {
+            const csvText = e.target.result;
+            const { runs: parsedRuns, skipped, errors } = parseStravaCSV(csvText);
+
+            if (parsedRuns.length === 0 && errors.length === 0) {
+                showImportStatus(
+                    `No running activities found in file. (${skipped} non-run activities skipped)`,
+                    'error'
+                );
+                return;
+            }
+
+            // Deduplicate against what's already in the app
+            const existingRuns = getRuns();
+            const { newRuns, duplicateCount } = deduplicateRuns(parsedRuns, existingRuns);
+
+            if (newRuns.length === 0) {
+                showImportStatus(
+                    `All ${duplicateCount} run(s) already exist — nothing new to import.`,
+                    'error'
+                );
+                return;
+            }
+
+            const confirmed = confirm(
+                `Found ${newRuns.length} new run(s) to import from Strava.\n` +
+                `${duplicateCount > 0 ? `${duplicateCount} duplicate(s) will be skipped.\n` : ''}` +
+                `${skipped > 0 ? `${skipped} non-running activit(ies) ignored.\n` : ''}` +
+                (errors.length > 0 ? `${errors.length} row(s) could not be parsed.\n` : '') +
+                `\nProceed?`
+            );
+
+            if (!confirmed) return;
+
+            // Save each new run
+            let saved = 0;
+            for (const run of newRuns) {
+                const result = saveRun(run);
+                if (result.success) saved++;
+            }
+
+            const errorSummary = errors.length > 0
+                ? ` (${errors.length} row(s) skipped due to parse errors)`
+                : '';
+
+            showImportStatus(
+                `Successfully imported ${saved} run(s) from Strava.${errorSummary}`,
+                'success'
+            );
+
+            updateDashboard();
+
+        } catch (err) {
+            console.error('Strava import error:', err);
+            showImportStatus('Failed to parse Strava CSV. Make sure you selected the activities.csv file.', 'error');
+        }
+    };
+
+    reader.onerror = () => {
+        showImportStatus('Failed to read file. Please try again.', 'error');
     };
 
     reader.readAsText(file);
