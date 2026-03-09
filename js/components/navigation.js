@@ -52,25 +52,37 @@ function initMobileNav() {
 
     if (!navToggle || !navLinks) return;
 
+    const setMenuState = (isOpen) => {
+        navToggle.classList.toggle('active', isOpen);
+        navLinks.classList.toggle('active', isOpen);
+        navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    };
+
     // Toggle menu when hamburger is clicked
     navToggle.addEventListener('click', () => {
-        navToggle.classList.toggle('active');
-        navLinks.classList.toggle('active');
+        const isOpen = navToggle.classList.contains('active');
+        setMenuState(!isOpen);
     });
 
     // Close menu when a nav link is clicked
     navLinkElements.forEach(link => {
         link.addEventListener('click', () => {
-            navToggle.classList.remove('active');
-            navLinks.classList.remove('active');
+            setMenuState(false);
         });
     });
 
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
         if (!navToggle.contains(e.target) && !navLinks.contains(e.target)) {
-            navToggle.classList.remove('active');
-            navLinks.classList.remove('active');
+            setMenuState(false);
+        }
+    });
+
+    // Close menu with Escape for keyboard accessibility
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && navToggle.classList.contains('active')) {
+            setMenuState(false);
+            navToggle.focus();
         }
     });
 }
