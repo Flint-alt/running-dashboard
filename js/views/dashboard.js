@@ -6,11 +6,13 @@
 import { getRuns, getRunsForWeek, getRun, deleteRun, saveRun, getSettings, getCurrentWeight, getWeightLost, getWeightProgress, exportData, importData, getRecords, getRunStreak, exportRunsAsCSV } from '../data/storage.js';
 import { parseStravaCSV, deduplicateRuns } from '../utils/stravaImport.js';
 import { getTodayISO, getCurrentWeek, formatDate, formatDateRange, getWeekDateRange, addDays, parseDate } from '../utils/date.js';
-import { formatPace, formatDuration, formatDistance } from '../utils/pace.js';
+import { formatPace, formatDuration, formatDistance, calculateAveragePace, predictFinishTime } from '../utils/pace.js';
 import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
 
-// Current run type filter
+// Recent runs state
 let currentRunTypeFilter = 'all';
+let currentSortOrder = 'newest';
+let currentSearchTerm = '';
 
 /**
  * Animate a numeric value from 0 to target over a duration.
@@ -54,6 +56,8 @@ export function initDashboard() {
     setupDataManagement();
     setupRecentRunsEventDelegation();
     setupRunTypeFilter();
+    setupRunSortOrder();
+    setupRunsSearch();
 }
 
 /**
@@ -67,6 +71,7 @@ export function updateDashboard() {
     updateRunStreak();
     updateNextMilestone();
     updateRaceCountdown();
+    updatePredictedFinishTime();
     updateWeekSummary();
     updatePersonalRecords();
     updateRecentRuns();
@@ -348,6 +353,32 @@ function updateRaceCountdown() {
 }
 
 /**
+ * Update predicted race finish time based on recent runs
+ */
+function updatePredictedFinishTime() {
+    const container = document.getElementById('predicted-finish');
+    const timeEl = document.getElementById('predicted-finish-time');
+    const basisEl = document.getElementById('predicted-finish-basis');
+
+    // Use recent non-recovery, non-missed runs (last 10) to estimate finish time
+    const recentRuns = getRuns()
+        .filter(r => r.type !== 'missed' && r.type !== 'recovery' && r.pace > 0)
+        .slice(0, 10);
+
+    if (recentRuns.length < 3) {
+        container.style.display = 'none';
+        return;
+    }
+
+    const avgPace = calculateAveragePace(recentRuns);
+    const predictedSeconds = predictFinishTime(21.1, avgPace);
+
+    timeEl.textContent = formatDuration(Math.round(predictedSeconds));
+    basisEl.textContent = `at ${formatPace(avgPace)} avg (last ${recentRuns.length} runs)`;
+    container.style.display = 'block';
+}
+
+/**
  * Update this week's summary
  */
 function updateWeekSummary() {
@@ -357,24 +388,24 @@ function updateWeekSummary() {
 
     const runs = getRunsForWeek(currentWeek);
 
-    // Calculate totals
-    const totalDistance = runs.reduce((sum, run) => sum + run.distance, 0);
-    const runCount = runs.length;
+    // Exclude missed runs from counts/distances
+    const actualRuns = runs.filter(r => r.type !== 'missed');
+    const totalDistance = actualRuns.reduce((sum, run) => sum + run.distance, 0);
+    const runCount = actualRuns.length;
 
     // Count gym and bodyweight sessions
     const gymSessions = runs.filter(run => run.gym).length;
     const bodyweightSessions = runs.filter(run => run.bodyweight).length;
 
-    // Update weekly progress indicator
-    // Target is 2 runs per week (parkrun + long run minimum)
-    const targetRuns = 2;
+    // Update weekly run-count progress indicator (configurable target)
+    const targetRuns = settings.weeklyRunTarget || 2;
     const completedRuns = Math.min(runCount, targetRuns);
     const progressPercentage = (completedRuns / targetRuns) * 100;
 
     const progressText = document.getElementById('week-progress-text');
     const progressBar = document.getElementById('week-progress-bar');
 
-    progressText.textContent = `${completedRuns}/${targetRuns} runs`;
+    progressText.textContent = `${runCount}/${targetRuns} runs`;
     progressBar.style.width = `${progressPercentage}%`;
 
     // Change color if target is met
@@ -384,6 +415,25 @@ function updateWeekSummary() {
     } else {
         progressText.style.color = '#166534';
         progressBar.style.background = 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)';
+    }
+
+    // Update weekly distance target (if set)
+    const distanceTargetSection = document.getElementById('week-distance-target-section');
+    const distanceTargetEl = settings.weeklyDistanceTarget || 0;
+    if (distanceTargetEl > 0) {
+        distanceTargetSection.style.display = 'block';
+        const distPct = Math.min((totalDistance / distanceTargetEl) * 100, 100);
+        const distText = document.getElementById('week-distance-progress-text');
+        const distBar = document.getElementById('week-distance-progress-bar');
+        distText.textContent = `${totalDistance.toFixed(1)}/${distanceTargetEl} km`;
+        distBar.style.width = `${distPct}%`;
+        if (distPct >= 100) {
+            distBar.style.background = 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)';
+        } else {
+            distBar.style.background = 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)';
+        }
+    } else {
+        distanceTargetSection.style.display = 'none';
     }
 
     // Update display
@@ -465,13 +515,46 @@ function updatePersonalRecords() {
 function updateRecentRuns() {
     let runs = getRuns();
 
-    // Apply filter if not 'all'
+    // Apply type filter
     if (currentRunTypeFilter !== 'all') {
         runs = runs.filter(run => run.type === currentRunTypeFilter);
     }
 
-    // Get 5 most recent (after filtering)
-    runs = runs.slice(0, 5);
+    // Apply notes search
+    if (currentSearchTerm) {
+        const term = currentSearchTerm.toLowerCase();
+        runs = runs.filter(run =>
+            (run.notes && run.notes.toLowerCase().includes(term)) ||
+            run.type.toLowerCase().includes(term) ||
+            run.date.includes(term) ||
+            run.distance.toString().includes(term)
+        );
+    }
+
+    // Apply sort
+    switch (currentSortOrder) {
+        case 'oldest':
+            runs = runs.sort((a, b) => new Date(a.date) - new Date(b.date));
+            break;
+        case 'distance-desc':
+            runs = runs.sort((a, b) => b.distance - a.distance);
+            break;
+        case 'distance-asc':
+            runs = runs.sort((a, b) => a.distance - b.distance);
+            break;
+        case 'pace-asc':
+            runs = runs.filter(r => r.pace > 0).sort((a, b) => a.pace - b.pace);
+            break;
+        case 'pace-desc':
+            runs = runs.filter(r => r.pace > 0).sort((a, b) => b.pace - a.pace);
+            break;
+        default: // newest
+            runs = runs.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+
+    // Show up to 10 runs when searching/sorting, 5 otherwise
+    const limit = (currentSearchTerm || currentSortOrder !== 'newest') ? 10 : 5;
+    runs = runs.slice(0, limit);
 
     const container = document.getElementById('recent-runs');
 
@@ -534,6 +617,42 @@ function setupRunTypeFilter() {
 
     // Add event listener
     filterSelect.addEventListener('change', handleFilterChange);
+}
+
+/**
+ * Set up run sort order dropdown
+ */
+function setupRunSortOrder() {
+    const sortSelect = document.getElementById('run-sort-order');
+    if (!sortSelect) return;
+    sortSelect.removeEventListener('change', handleSortChange);
+    sortSelect.addEventListener('change', handleSortChange);
+}
+
+/**
+ * Set up notes search input
+ */
+function setupRunsSearch() {
+    const searchInput = document.getElementById('runs-search');
+    if (!searchInput) return;
+    searchInput.removeEventListener('input', handleSearchInput);
+    searchInput.addEventListener('input', handleSearchInput);
+}
+
+/**
+ * Handle sort dropdown change
+ */
+function handleSortChange(event) {
+    currentSortOrder = event.target.value;
+    updateRecentRuns();
+}
+
+/**
+ * Handle search input change
+ */
+function handleSearchInput(event) {
+    currentSearchTerm = event.target.value.trim();
+    updateRecentRuns();
 }
 
 /**
@@ -609,14 +728,35 @@ function createRunCard(run) {
         tempo: '#f59e0b',
         intervals: '#ef4444',
         recovery: '#8b5cf6',
-        treadmill: '#06b6d4'
+        treadmill: '#06b6d4',
+        missed: '#9ca3af'
     };
 
     const typeColor = runTypeColors[run.type] || '#6b7280';
-    const sparkline = generatePaceSparkline(run, typeColor);
+    const sparkline = run.type !== 'missed' ? generatePaceSparkline(run, typeColor) : '';
 
     // Escape HTML in notes to prevent XSS
     const safeNotes = run.notes ? run.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
+    // Missed run renders differently
+    if (run.type === 'missed') {
+        return `
+            <div class="run-item" data-run-id="${run.id}" style="opacity: 0.75; border-left: 3px solid #9ca3af;">
+                <div class="run-item-main">
+                    <div class="run-item-header">
+                        <span class="run-type-badge missed" style="background-color: #f3f4f6; color: #6b7280;">
+                            Missed
+                        </span>
+                        <span class="run-date">${formatDate(run.date, 'short')}</span>
+                    </div>
+                    ${safeNotes ? `<div class="run-notes" style="margin-top: var(--spacing-sm); color: var(--text-secondary); font-size: var(--font-size-sm);">Reason: ${safeNotes}</div>` : ''}
+                </div>
+                <div class="run-item-actions" style="margin-top: var(--spacing-sm); display: flex; gap: var(--spacing-sm);">
+                    <button class="btn-delete-run" data-run-id="${run.id}" style="flex: 1; padding: var(--spacing-sm); border: 1px solid var(--danger-color); background: white; color: var(--danger-color); border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-sm);">Delete</button>
+                </div>
+            </div>
+        `;
+    }
 
     return `
         <div class="run-item" data-run-id="${run.id}">

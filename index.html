@@ -55,6 +55,7 @@
                 <li><a href="#log-run" class="nav-link" data-page="log-run">Log Run</a></li>
                 <li><a href="#progress" class="nav-link" data-page="progress">Progress</a></li>
                 <li><a href="#weight" class="nav-link" data-page="weight">Weight</a></li>
+                <li><a href="#settings" class="nav-link" data-page="settings">Settings</a></li>
             </ul>
         </div>
     </nav>
@@ -169,6 +170,13 @@
                         <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--primary-color);" id="race-countdown-days">-</div>
                         <div style="font-size: var(--font-size-sm); color: var(--text-secondary);" id="race-countdown-date">Nov 8, 2026</div>
                     </div>
+
+                    <!-- Predicted Finish Time -->
+                    <div id="predicted-finish" style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color); display: none;">
+                        <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Predicted Finish</div>
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--secondary-color);" id="predicted-finish-time">-</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--text-secondary);" id="predicted-finish-basis">based on recent runs</div>
+                    </div>
                 </div>
 
                 <!-- This Week Summary -->
@@ -178,11 +186,22 @@
                     <!-- Weekly Progress Indicator -->
                     <div style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: var(--radius-md); border: 2px solid #22c55e;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xs);">
-                            <span style="font-weight: 600; color: #166534;">Weekly Target</span>
+                            <span style="font-weight: 600; color: #166534;">Run Target</span>
                             <span id="week-progress-text" style="font-weight: 700; color: #166534;">0/2 runs</span>
                         </div>
                         <div style="background: white; border-radius: var(--radius-sm); height: 12px; overflow: hidden;">
                             <div id="week-progress-bar" style="height: 100%; background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); width: 0%; transition: width 0.3s ease; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);"></div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Distance Target (shown when configured) -->
+                    <div id="week-distance-target-section" style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: var(--radius-md); border: 2px solid #3b82f6; display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xs);">
+                            <span style="font-weight: 600; color: #1e40af;">Distance Target</span>
+                            <span id="week-distance-progress-text" style="font-weight: 700; color: #1e40af;">0/0 km</span>
+                        </div>
+                        <div style="background: white; border-radius: var(--radius-sm); height: 12px; overflow: hidden;">
+                            <div id="week-distance-progress-bar" style="height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); width: 0%; transition: width 0.3s ease; box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);"></div>
                         </div>
                     </div>
 
@@ -221,11 +240,20 @@
 
                 <!-- Recent Runs -->
                 <div class="card recent-runs-card full-width">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md); flex-wrap: wrap; gap: var(--spacing-sm);">
                         <h3 style="margin: 0;">Recent Runs</h3>
-                        <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
+                        <div style="display: flex; gap: var(--spacing-sm); align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="runs-search" placeholder="Search notes..." style="padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: var(--font-size-sm); width: 130px;">
+                            <select id="run-sort-order" style="padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; cursor: pointer; font-size: var(--font-size-sm);">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="distance-desc">Longest First</option>
+                                <option value="distance-asc">Shortest First</option>
+                                <option value="pace-asc">Fastest Pace</option>
+                                <option value="pace-desc">Slowest Pace</option>
+                            </select>
                             <label for="run-type-filter" style="font-size: var(--font-size-sm); color: var(--text-secondary);">Filter:</label>
-                            <select id="run-type-filter" style="padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; cursor: pointer;">
+                            <select id="run-type-filter" style="padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; cursor: pointer; font-size: var(--font-size-sm);">
                                 <option value="all">All Types</option>
                                 <option value="parkrun">Parkrun</option>
                                 <option value="long">Long Run</option>
@@ -234,6 +262,7 @@
                                 <option value="intervals">Intervals</option>
                                 <option value="recovery">Recovery</option>
                                 <option value="treadmill">Treadmill</option>
+                                <option value="missed">Missed</option>
                             </select>
                         </div>
                     </div>
@@ -313,29 +342,45 @@
                             <option value="intervals">Intervals</option>
                             <option value="recovery">Recovery Run</option>
                             <option value="treadmill">Treadmill</option>
+                            <option value="missed">Missed Run</option>
                         </select>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="run-distance">Distance (km)</label>
-                            <input type="number" id="run-distance" name="distance" min="0.01" step="0.01" required>
+                    <!-- Reason field - only shown for missed runs -->
+                    <div class="form-group" id="missed-reason-group" style="display: none;">
+                        <label for="run-missed-reason">Reason for missing</label>
+                        <select id="run-missed-reason" name="missedReason">
+                            <option value="illness">Illness / Injury</option>
+                            <option value="weather">Bad Weather</option>
+                            <option value="time">No Time</option>
+                            <option value="tired">Too Tired</option>
+                            <option value="travel">Travel / Away</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div id="run-distance-time-group">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="run-distance">Distance (km)</label>
+                                <input type="number" id="run-distance" name="distance" min="0.01" step="0.01" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="run-time">Time (HH:MM:SS or MM:SS)</label>
+                                <input type="text" id="run-time" name="time" placeholder="30:00 or 1:30:00" required>
+                            </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="run-time">Time (HH:MM:SS or MM:SS)</label>
-                            <input type="text" id="run-time" name="time" placeholder="30:00 or 1:30:00" required>
+                            <label for="run-heart-rate">Average Heart Rate (bpm, optional)</label>
+                            <input type="number" id="run-heart-rate" name="heartRate" min="40" max="220" step="1" placeholder="e.g. 145">
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="run-heart-rate">Average Heart Rate (bpm, optional)</label>
-                        <input type="number" id="run-heart-rate" name="heartRate" min="40" max="220" step="1" placeholder="e.g. 145">
-                    </div>
-
-                    <div class="form-group pace-display">
-                        <label>Pace</label>
-                        <div class="pace-value" id="calculated-pace">-</div>
+                        <div class="form-group pace-display">
+                            <label>Pace</label>
+                            <div class="pace-value" id="calculated-pace">-</div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -429,6 +474,30 @@
                         <canvas id="run-type-chart"></canvas>
                     </div>
                 </div>
+
+                <!-- Heart Rate Zone Analysis -->
+                <div class="card chart-card">
+                    <h3>Heart Rate Zones</h3>
+                    <div id="hr-zones-container">
+                        <div class="empty-state-enhanced">
+                            <div class="empty-state-icon">&#10084;</div>
+                            <div class="empty-state-title">No heart rate data yet</div>
+                            <div class="empty-state-message">Log runs with average heart rate to see zone breakdown.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Adherence Score -->
+                <div class="card monthly-stats-card full-width">
+                    <h3>Training Adherence</h3>
+                    <div id="adherence-container">
+                        <div class="empty-state-enhanced">
+                            <div class="empty-state-icon">&#128203;</div>
+                            <div class="empty-state-title">No data yet</div>
+                            <div class="empty-state-message">Adherence score compares your actual runs to the training plan.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -473,6 +542,59 @@
                         <canvas id="weight-chart"></canvas>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="page-section">
+            <div class="section-header">
+                <h2>Settings</h2>
+                <p class="section-subtitle">Configure your training preferences</p>
+            </div>
+
+            <div class="form-container">
+                <form id="settings-form" class="card">
+                    <div class="form-group">
+                        <label for="settings-plan-start">Training Plan Start Date</label>
+                        <input type="date" id="settings-plan-start" name="planStart">
+                        <small style="color: var(--text-secondary); font-size: var(--font-size-xs);">The Monday that Week 1 of your training begins. Changing this will affect week number calculations going forward.</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="settings-goal-weight">Goal Weight (kg)</label>
+                            <input type="number" id="settings-goal-weight" name="goalWeight" min="30" max="300" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="settings-starting-weight">Starting Weight (kg)</label>
+                            <input type="number" id="settings-starting-weight" name="startingWeight" min="30" max="300" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="settings-weekly-run-target">Weekly Run Target</label>
+                            <input type="number" id="settings-weekly-run-target" name="weeklyRunTarget" min="1" max="14" step="1">
+                            <small style="color: var(--text-secondary); font-size: var(--font-size-xs);">Minimum runs per week shown on the dashboard.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="settings-weekly-distance-target">Weekly Distance Target (km)</label>
+                            <input type="number" id="settings-weekly-distance-target" name="weeklyDistanceTarget" min="0" max="200" step="0.1">
+                            <small style="color: var(--text-secondary); font-size: var(--font-size-xs);">Set to 0 to disable the distance target bar.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="settings-max-hr">Max Heart Rate (bpm)</label>
+                        <input type="number" id="settings-max-hr" name="maxHeartRate" min="100" max="250" step="1">
+                        <small style="color: var(--text-secondary); font-size: var(--font-size-xs);">Used to calculate heart rate training zones. A rough estimate: 220 minus your age.</small>
+                    </div>
+
+                    <div id="settings-errors" class="error-messages"></div>
+                    <div id="settings-success" class="success-message"></div>
+
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </form>
             </div>
         </section>
 

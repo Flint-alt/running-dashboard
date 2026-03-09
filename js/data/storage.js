@@ -22,7 +22,10 @@ function getDefaultStore() {
         settings: {
             trainingPlanStart: '2026-01-05', // Monday, Week 1 starts Jan 5, 2026
             goalWeight: 65,
-            startingWeight: STARTING_WEIGHT
+            startingWeight: STARTING_WEIGHT,
+            weeklyRunTarget: 2,       // Target number of runs per week
+            weeklyDistanceTarget: 0,  // Target km per week (0 = no target)
+            maxHeartRate: 185         // Used for HR zone calculations
         },
         milestones: {
             // Track when milestones are achieved
@@ -43,10 +46,12 @@ function getStore() {
         const data = localStorage.getItem(STORAGE_KEY);
         if (data) {
             const parsed = JSON.parse(data);
-            // Ensure all expected properties exist (for backwards compatibility)
+            const defaults = getDefaultStore();
+            // Deep merge settings so new fields get their defaults even for existing users
             return {
-                ...getDefaultStore(),
-                ...parsed
+                ...defaults,
+                ...parsed,
+                settings: { ...defaults.settings, ...(parsed.settings || {}) }
             };
         }
     } catch (e) {
@@ -374,7 +379,7 @@ export function getRunsForWeek(weekNumber) {
  * @returns {Object} Statistics object with totals
  */
 export function getStatistics() {
-    const runs = getRuns();
+    const runs = getRuns().filter(r => r.type !== 'missed');
 
     if (runs.length === 0) {
         return {
@@ -444,7 +449,7 @@ export function getWeightProgress() {
  * @returns {Object} Personal records object with fastest 5K, 10K, longest run, and best pace
  */
 export function getRecords() {
-    const runs = getRuns();
+    const runs = getRuns().filter(r => r.type !== 'missed' && r.pace > 0);
 
     if (runs.length === 0) {
         return {
@@ -498,7 +503,7 @@ export function getRecords() {
  * @returns {Object} Streak information: {current: number, longest: number}
  */
 export function getRunStreak() {
-    const runs = getRuns();
+    const runs = getRuns().filter(r => r.type !== 'missed');
     const settings = getSettings();
 
     if (runs.length === 0) {
@@ -555,7 +560,7 @@ export function getRunStreak() {
  * @returns {Array} Array of monthly stats objects: [{month: 'YYYY-MM', distance: number, runs: number}]
  */
 export function getMonthlyStats() {
-    const runs = getRuns();
+    const runs = getRuns().filter(r => r.type !== 'missed');
 
     if (runs.length === 0) {
         return [];
@@ -588,7 +593,7 @@ export function getMonthlyStats() {
  * @returns {Object} Object with run type counts: {parkrun: 5, long: 8, tempo: 3, ...}
  */
 export function getRunTypeDistribution() {
-    const runs = getRuns();
+    const runs = getRuns().filter(r => r.type !== 'missed');
 
     if (runs.length === 0) {
         return {};
