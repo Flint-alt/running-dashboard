@@ -210,7 +210,9 @@ function renderPaceTrendChart() {
         paceTrendChart.destroy();
     }
 
-    const runs = getRuns().reverse(); // Oldest to newest for trend
+    const runs = getRuns()
+        .filter(run => run.type !== 'missed' && run.pace > 0)
+        .reverse(); // Oldest to newest for trend
 
     if (runs.length === 0) {
         canvas.parentElement.innerHTML = `
