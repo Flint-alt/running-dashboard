@@ -325,6 +325,135 @@ export function exportRunsAsCSV() {
 }
 
 /**
+ * Validate and sanitize imported data structure.
+ * @param {Object} data - Parsed JSON import payload
+ * @returns {Object} Sanitized store object
+ */
+function validateImportedData(data) {
+    const defaults = getDefaultStore();
+
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        throw new Error('Import must be a JSON object.');
+    }
+
+    if (!Array.isArray(data.runs) || !Array.isArray(data.weights) || !data.settings || typeof data.settings !== 'object') {
+        throw new Error('Missing required keys: runs, weights, settings.');
+    }
+
+    const runs = data.runs.map((run, index) => {
+        if (!run || typeof run !== 'object') {
+            throw new Error(`Run #${index + 1} is not a valid object.`);
+        }
+
+        if (typeof run.date !== 'string') {
+            throw new Error(`Run #${index + 1} is missing a valid date.`);
+        }
+
+        if (typeof run.type !== 'string') {
+            throw new Error(`Run #${index + 1} is missing a valid type.`);
+        }
+
+        const distance = Number(run.distance || 0);
+        const time = Number(run.time || 0);
+        const pace = Number(run.pace || 0);
+        const week = Number(run.week);
+        const heartRate = run.heartRate == null ? null : Number(run.heartRate);
+
+        if (!Number.isFinite(distance) || distance < 0 || distance > 500) {
+            throw new Error(`Run #${index + 1} has invalid distance.`);
+        }
+
+        if (!Number.isFinite(time) || time < 0 || time > 24 * 3600) {
+            throw new Error(`Run #${index + 1} has invalid time.`);
+        }
+
+        if (!Number.isFinite(pace) || pace < 0 || pace > 3600) {
+            throw new Error(`Run #${index + 1} has invalid pace.`);
+        }
+
+        if (run.week != null && run.week !== '' && (!Number.isFinite(week) || week < 0 || week > 1000)) {
+            throw new Error(`Run #${index + 1} has invalid week.`);
+        }
+
+        if (heartRate != null && (!Number.isFinite(heartRate) || heartRate < 0 || heartRate > 300)) {
+            throw new Error(`Run #${index + 1} has invalid heart rate.`);
+        }
+
+        return {
+            id: run.id || `run_${Date.now()}_${index}`,
+            date: run.date,
+            type: run.type,
+            distance,
+            time,
+            pace,
+            heartRate,
+            notes: typeof run.notes === 'string' ? run.notes : '',
+            gym: Boolean(run.gym),
+            bodyweight: Boolean(run.bodyweight),
+            week: Number.isFinite(week) ? week : null,
+            phase: typeof run.phase === 'string' ? run.phase : 'N/A',
+            source: typeof run.source === 'string' ? run.source : undefined
+        };
+    });
+
+    const weights = data.weights.map((entry, index) => {
+        if (!entry || typeof entry !== 'object') {
+            throw new Error(`Weight #${index + 1} is not a valid object.`);
+        }
+
+        if (typeof entry.date !== 'string') {
+            throw new Error(`Weight #${index + 1} is missing a valid date.`);
+        }
+
+        const weight = Number(entry.weight);
+        if (!Number.isFinite(weight) || weight < 30 || weight > 300) {
+            throw new Error(`Weight #${index + 1} has invalid value.`);
+        }
+
+        return {
+            id: entry.id || `weight_${Date.now()}_${index}`,
+            date: entry.date,
+            weight,
+            note: typeof entry.note === 'string' ? entry.note : ''
+        };
+    });
+
+    const settings = { ...defaults.settings, ...data.settings };
+
+    const constrainedSettings = {
+        trainingPlanStart: typeof settings.trainingPlanStart === 'string' ? settings.trainingPlanStart : defaults.settings.trainingPlanStart,
+        goalWeight: Number.isFinite(Number(settings.goalWeight)) ? Number(settings.goalWeight) : defaults.settings.goalWeight,
+        startingWeight: Number.isFinite(Number(settings.startingWeight)) ? Number(settings.startingWeight) : defaults.settings.startingWeight,
+        weeklyRunTarget: Number.isFinite(Number(settings.weeklyRunTarget)) ? Number(settings.weeklyRunTarget) : defaults.settings.weeklyRunTarget,
+        weeklyDistanceTarget: Number.isFinite(Number(settings.weeklyDistanceTarget)) ? Number(settings.weeklyDistanceTarget) : defaults.settings.weeklyDistanceTarget,
+        maxHeartRate: Number.isFinite(Number(settings.maxHeartRate)) ? Number(settings.maxHeartRate) : defaults.settings.maxHeartRate
+    };
+
+    if (constrainedSettings.goalWeight < 30 || constrainedSettings.goalWeight > 300) throw new Error('Invalid goal weight in settings.');
+    if (constrainedSettings.startingWeight < 30 || constrainedSettings.startingWeight > 300) throw new Error('Invalid starting weight in settings.');
+    if (constrainedSettings.weeklyRunTarget < 1 || constrainedSettings.weeklyRunTarget > 14) throw new Error('Invalid weekly run target in settings.');
+    if (constrainedSettings.weeklyDistanceTarget < 0 || constrainedSettings.weeklyDistanceTarget > 2000) throw new Error('Invalid weekly distance target in settings.');
+    if (constrainedSettings.maxHeartRate < 100 || constrainedSettings.maxHeartRate > 250) throw new Error('Invalid max heart rate in settings.');
+
+    const milestones = {
+        ...defaults.milestones,
+        ...(data.milestones && typeof data.milestones === 'object' ? data.milestones : {})
+    };
+
+    return {
+        runs,
+        weights,
+        settings: constrainedSettings,
+        milestones: {
+            first10k: Boolean(milestones.first10k),
+            first15k: Boolean(milestones.first15k),
+            first20k: Boolean(milestones.first20k),
+            halfMarathon: Boolean(milestones.halfMarathon)
+        }
+    };
+}
+
+/**
  * Import data from JSON string
  * @param {string} jsonString - JSON data to import
  * @returns {boolean} True if successful
@@ -332,16 +461,11 @@ export function exportRunsAsCSV() {
 export function importData(jsonString) {
     try {
         const data = JSON.parse(jsonString);
-
-        // Validate structure
-        if (!data.runs || !data.weights || !data.settings) {
-            throw new Error('Invalid data structure');
-        }
-
-        return setStore(data);
+        const validatedData = validateImportedData(data);
+        return setStore(validatedData);
     } catch (e) {
         console.error('Error importing data:', e);
-        alert('Invalid data format. Please check your import file.');
+        alert(`Invalid data format: ${e.message || 'Please check your import file.'}`);
         return false;
     }
 }
@@ -608,4 +732,90 @@ export function getRunTypeDistribution() {
     });
 
     return distribution;
+}
+
+/**
+ * Infer phase label from training week.
+ * @param {number|null} week - Training week
+ * @returns {string} Phase label
+ */
+function phaseFromWeek(week) {
+    if (!week || week < 1) return 'N/A';
+    if (week <= 12) return 'Phase 1: Build to 10k';
+    if (week <= 24) return 'Phase 2: Extend to 15k';
+    if (week <= 36) return 'Phase 3: Build to 20k';
+    if (week <= 44) return 'Phase 4: Race Prep & Taper';
+    return 'N/A';
+}
+
+/**
+ * Audit run metadata for invalid week/phase/date mismatches.
+ * @returns {{issueCount:number, issues:string[]}} Integrity report
+ */
+export function auditDataIntegrity() {
+    const store = getStore();
+    const settings = getSettings();
+    const issues = [];
+
+    store.runs.forEach((run, idx) => {
+        if (!run || typeof run !== 'object') {
+            issues.push(`Run #${idx + 1} is not a valid object.`);
+            return;
+        }
+
+        if (!run.date || typeof run.date !== 'string') {
+            issues.push(`Run ${run.id || '#' + (idx + 1)} is missing a valid date.`);
+            return;
+        }
+
+        const computedWeek = getCurrentWeek(run.date, settings.trainingPlanStart);
+        const normalizedWeek = (computedWeek >= 1 && computedWeek <= 44) ? computedWeek : null;
+
+        if ((run.week || null) !== normalizedWeek) {
+            issues.push(`Run ${run.id || '#' + (idx + 1)} has week=${run.week ?? 'null'} but should be ${normalizedWeek ?? 'null'}.`);
+        }
+
+        const expectedPhase = phaseFromWeek(normalizedWeek);
+        if ((run.phase || 'N/A') !== expectedPhase) {
+            issues.push(`Run ${run.id || '#' + (idx + 1)} has phase="${run.phase || 'N/A'}" but should be "${expectedPhase}".`);
+        }
+    });
+
+    return { issueCount: issues.length, issues };
+}
+
+/**
+ * Repair run metadata by recalculating week and phase from run date.
+ * @returns {{updatedRuns:number}} Number of updated runs
+ */
+export function repairRunMetadata() {
+    const store = getStore();
+    const settings = getSettings();
+
+    let updatedRuns = 0;
+
+    store.runs = store.runs.map(run => {
+        if (!run || typeof run !== 'object' || !run.date || typeof run.date !== 'string') {
+            return run;
+        }
+
+        const computedWeek = getCurrentWeek(run.date, settings.trainingPlanStart);
+        const normalizedWeek = (computedWeek >= 1 && computedWeek <= 44) ? computedWeek : null;
+        const expectedPhase = phaseFromWeek(normalizedWeek);
+
+        const needsUpdate = (run.week || null) !== normalizedWeek || (run.phase || 'N/A') !== expectedPhase;
+        if (!needsUpdate) {
+            return run;
+        }
+
+        updatedRuns++;
+        return {
+            ...run,
+            week: normalizedWeek,
+            phase: expectedPhase
+        };
+    });
+
+    setStore(store);
+    return { updatedRuns };
 }

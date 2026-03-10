@@ -42,16 +42,50 @@ function parseCSVRow(line) {
  * @returns {Array} Array of row objects
  */
 function parseCSV(csvText) {
-    // Normalise line endings
-    const lines = csvText.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
-    if (lines.length < 2) return [];
+    // Normalize line endings and parse rows while respecting quoted newlines.
+    const normalized = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+    if (!normalized) return [];
 
-    const headers = parseCSVRow(lines[0]);
+    const parsedRows = [];
+    let currentRow = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < normalized.length; i++) {
+        const char = normalized[i];
+        const nextChar = normalized[i + 1];
+
+        if (char === '"') {
+            // Handle escaped quotes inside quoted fields.
+            if (inQuotes && nextChar === '"') {
+                currentRow += '""';
+                i++;
+                continue;
+            }
+            inQuotes = !inQuotes;
+        }
+
+        if (char === '\n' && !inQuotes) {
+            if (currentRow.trim()) {
+                parsedRows.push(currentRow);
+            }
+            currentRow = '';
+            continue;
+        }
+
+        currentRow += char;
+    }
+
+    if (currentRow.trim()) {
+        parsedRows.push(currentRow);
+    }
+
+    if (parsedRows.length < 2) return [];
+
+    const headers = parseCSVRow(parsedRows[0]);
     const rows = [];
 
-    for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        const values = parseCSVRow(lines[i]);
+    for (let i = 1; i < parsedRows.length; i++) {
+        const values = parseCSVRow(parsedRows[i]);
         const row = {};
         headers.forEach((header, index) => {
             row[header.trim().replace(/^"|"$/g, '')] = (values[index] || '').replace(/^"|"$/g, '');
@@ -99,7 +133,7 @@ function inferRunType(name, distanceKm) {
     if (nameLower.includes('interval') || nameLower.includes('speed') || nameLower.includes('track')) return 'intervals';
     if (nameLower.includes('tempo')) return 'tempo';
     if (nameLower.includes('recovery')) return 'recovery';
-    if (nameLower.includes('long run') || nameLower.includes('long run')) return 'long';
+    if (nameLower.includes('long run') || nameLower.includes('long')) return 'long';
 
     // Distance-based inference
     if (distanceKm >= 4.8 && distanceKm <= 5.3) return 'parkrun';
@@ -208,9 +242,19 @@ export function deduplicateRuns(importedRuns, existingRuns) {
     let duplicateCount = 0;
 
     const newRuns = importedRuns.filter(imported => {
+        const importedStravaId = typeof imported.id === 'string' && imported.id.startsWith('run_strava_')
+            ? imported.id
+            : null;
+
         const isDuplicate = existingRuns.some(existing =>
-            existing.date === imported.date &&
-            Math.abs(existing.distance - imported.distance) < 0.2
+            // Strongest signal: exact Strava activity ID match when available.
+            (importedStravaId && existing.id === importedStravaId) ||
+            // Fallback: same date + similar distance + similar elapsed time.
+            (
+                existing.date === imported.date &&
+                Math.abs(existing.distance - imported.distance) < 0.2 &&
+                Math.abs((existing.time || 0) - (imported.time || 0)) <= 300
+            )
         );
         if (isDuplicate) {
             duplicateCount++;

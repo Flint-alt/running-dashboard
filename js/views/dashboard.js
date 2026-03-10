@@ -7,6 +7,7 @@ import { getRuns, getRunsForWeek, getRun, deleteRun, saveRun, getSettings, getCu
 import { parseStravaCSV, deduplicateRuns } from '../utils/stravaImport.js';
 import { getTodayISO, getCurrentWeek, formatDate, formatDateRange, getWeekDateRange, addDays, parseDate } from '../utils/date.js';
 import { formatPace, formatDuration, formatDistance, calculateAveragePace, predictFinishTime } from '../utils/pace.js';
+import { escapeHtml } from '../utils/sanitize.js';
 import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
 
 // Recent runs state
@@ -586,7 +587,8 @@ function updateRecentRuns() {
         return;
     }
 
-    container.innerHTML = runs.map(run => createRunCard(run)).join('');
+    const sparklineRunsByType = buildSparklineRunsByType(getRuns());
+    container.innerHTML = runs.map(run => createRunCard(run, sparklineRunsByType)).join('');
     // Event listeners now handled by event delegation in setupRecentRunsEventDelegation()
 }
 
@@ -688,9 +690,8 @@ function handleRecentRunsClick(event) {
  * @param {string} color - The color for the sparkline
  * @returns {string} SVG HTML string or empty string
  */
-function generatePaceSparkline(run, color) {
-    const allRuns = getRuns().reverse(); // oldest first
-    const sameTypeRuns = allRuns.filter(r => r.type === run.type && r.pace > 0);
+function generatePaceSparkline(run, color, sparklineRunsByType) {
+    const sameTypeRuns = sparklineRunsByType[run.type] || [];
 
     if (sameTypeRuns.length < 2) return '';
 
@@ -720,7 +721,25 @@ function generatePaceSparkline(run, color) {
         </svg>`;
 }
 
-function createRunCard(run) {
+/**
+ * Build a map of run type => pace-valid runs in chronological order.
+ * @param {Array} allRuns - All runs from storage
+ * @returns {Object<string, Array>} Grouped runs by type
+ */
+function buildSparklineRunsByType(allRuns) {
+    return allRuns
+        .filter(run => run.pace > 0 && run.type !== 'missed')
+        .reverse()
+        .reduce((acc, run) => {
+            if (!acc[run.type]) {
+                acc[run.type] = [];
+            }
+            acc[run.type].push(run);
+            return acc;
+        }, {});
+}
+
+function createRunCard(run, sparklineRunsByType) {
     const runTypeColors = {
         parkrun: '#2563eb',
         long: '#ec4899',
@@ -733,10 +752,12 @@ function createRunCard(run) {
     };
 
     const typeColor = runTypeColors[run.type] || '#6b7280';
-    const sparkline = run.type !== 'missed' ? generatePaceSparkline(run, typeColor) : '';
+    const sparkline = run.type !== 'missed'
+        ? generatePaceSparkline(run, typeColor, sparklineRunsByType)
+        : '';
 
     // Escape HTML in notes to prevent XSS
-    const safeNotes = run.notes ? run.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+    const safeNotes = run.notes ? escapeHtml(run.notes) : '';
 
     // Missed run renders differently
     if (run.type === 'missed') {
