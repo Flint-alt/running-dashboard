@@ -498,6 +498,18 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Training Insights -->
+                <div class="card monthly-stats-card full-width">
+                    <h3>Training Insights</h3>
+                    <div id="training-insights-container">
+                        <div class="empty-state-enhanced">
+                            <div class="empty-state-icon">&#128161;</div>
+                            <div class="empty-state-title">No insights yet</div>
+                            <div class="empty-state-message">Consistency and training-load insights will appear once you log runs.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -588,6 +600,18 @@
                         <label for="settings-max-hr">Max Heart Rate (bpm)</label>
                         <input type="number" id="settings-max-hr" name="maxHeartRate" min="100" max="250" step="1">
                         <small style="color: var(--text-secondary); font-size: var(--font-size-xs);">Used to calculate heart rate training zones. A rough estimate: 220 minus your age.</small>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">
+                        <h3 style="font-size: var(--font-size-md); margin-bottom: var(--spacing-sm);">Data Integrity Tools</h3>
+                        <p style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-sm);">
+                            Audit and repair run week/phase metadata based on each run date and your current plan start date.
+                        </p>
+                        <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+                            <button type="button" class="btn" id="btn-audit-integrity">Run Integrity Check</button>
+                            <button type="button" class="btn" id="btn-repair-metadata">Repair Week/Phase Metadata</button>
+                        </div>
+                        <div id="integrity-output" style="margin-top: var(--spacing-sm);"></div>
                     </div>
 
                     <div id="settings-errors" class="error-messages"></div>

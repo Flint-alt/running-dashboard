@@ -24,6 +24,7 @@ export function initProgress() {
     renderRunTypeChart();
     renderHRZones();
     renderAdherenceScore();
+    renderTrainingInsights();
 }
 
 /**
@@ -537,4 +538,96 @@ function renderAdherenceScore() {
             Last ${recentWeeks.length} weeks
         </h4>
         ${weeksHTML}`;
+}
+
+
+/**
+ * Render training insights including consistency score and load safety signal.
+ */
+function renderTrainingInsights() {
+    const container = document.getElementById('training-insights-container');
+    if (!container) return;
+
+    const runs = getRuns().filter(r => r.type !== 'missed');
+    if (runs.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-enhanced">
+                <div class="empty-state-icon">&#128161;</div>
+                <div class="empty-state-title">No insights yet</div>
+                <div class="empty-state-message">Log a few runs to unlock consistency and load insights.</div>
+            </div>`;
+        return;
+    }
+
+    const settings = getSettings();
+    const today = getTodayISO();
+    const currentWeek = Math.min(44, getCurrentWeek(today, settings.trainingPlanStart));
+    const weeksToCheck = [];
+    for (let week = Math.max(1, currentWeek - 7); week <= currentWeek; week++) {
+        weeksToCheck.push(week);
+    }
+
+    let runTargetHitWeeks = 0;
+    let distanceAdherenceSum = 0;
+
+    weeksToCheck.forEach(week => {
+        const weekPlan = getWeekPlan(week);
+        const weekRuns = runs.filter(r => r.week === week);
+        const runCount = weekRuns.length;
+        const weekDistance = weekRuns.reduce((sum, r) => sum + r.distance, 0);
+        if (runCount >= (settings.weeklyRunTarget || 2)) {
+            runTargetHitWeeks++;
+        }
+        const distanceAdherence = weekPlan && weekPlan.totalDistance > 0
+            ? Math.min((weekDistance / weekPlan.totalDistance) * 100, 100)
+            : 0;
+        distanceAdherenceSum += distanceAdherence;
+    });
+
+    const runTargetComponent = weeksToCheck.length > 0 ? (runTargetHitWeeks / weeksToCheck.length) * 100 : 0;
+    const distanceComponent = weeksToCheck.length > 0 ? (distanceAdherenceSum / weeksToCheck.length) : 0;
+    const consistencyScore = ((runTargetComponent * 0.5) + (distanceComponent * 0.5)).toFixed(1);
+
+    // Acute:chronic load ratio approximation from distance totals.
+    const sortedRuns = [...runs].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const msInDay = 24 * 60 * 60 * 1000;
+    const end = new Date(today + 'T00:00:00').getTime();
+    const acuteStart = end - (7 * msInDay);
+    const chronicStart = end - (28 * msInDay);
+
+    let acuteDistance = 0;
+    let chronicDistance = 0;
+    sortedRuns.forEach(run => {
+        const ts = new Date(run.date + 'T00:00:00').getTime();
+        if (ts >= chronicStart && ts <= end) chronicDistance += run.distance;
+        if (ts >= acuteStart && ts <= end) acuteDistance += run.distance;
+    });
+
+    const chronicWeekly = chronicDistance / 4;
+    const acwr = chronicWeekly > 0 ? acuteDistance / chronicWeekly : 0;
+
+    let loadMessage = 'Stable load';
+    let loadColor = '#22c55e';
+    if (acwr > 1.3) {
+        loadMessage = 'High recent load increase — consider a lighter week';
+        loadColor = '#ef4444';
+    } else if (acwr > 1.1) {
+        loadMessage = 'Moderate load increase — monitor recovery';
+        loadColor = '#f59e0b';
+    }
+
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--spacing-md);">
+            <div style="padding: var(--spacing-md); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--card-bg);">
+                <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-bottom: 4px;">Consistency Score (last ${weeksToCheck.length} weeks)</div>
+                <div style="font-size: var(--font-size-xxl); font-weight: 700; color: var(--primary-color);">${consistencyScore}%</div>
+                <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: 4px;">50% run-target adherence + 50% distance-plan adherence</div>
+            </div>
+            <div style="padding: var(--spacing-md); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--card-bg);">
+                <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-bottom: 4px;">Load Safety Check (ACWR)</div>
+                <div style="font-size: var(--font-size-xxl); font-weight: 700; color: ${loadColor};">${acwr ? acwr.toFixed(2) : 'n/a'}</div>
+                <div style="font-size: var(--font-size-sm); color: ${loadColor}; margin-top: 4px; font-weight: 600;">${loadMessage}</div>
+                <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: 4px;">Acute 7d: ${acuteDistance.toFixed(1)} km · Chronic weekly baseline: ${chronicWeekly.toFixed(1)} km</div>
+            </div>
+        </div>`;
 }

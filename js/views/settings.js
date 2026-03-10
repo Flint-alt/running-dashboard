@@ -3,7 +3,8 @@
  * Allows users to configure training preferences
  */
 
-import { getSettings, updateSettings } from '../data/storage.js';
+import { getSettings, updateSettings, auditDataIntegrity, repairRunMetadata } from '../data/storage.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 /**
  * Initialize settings view
@@ -11,6 +12,7 @@ import { getSettings, updateSettings } from '../data/storage.js';
 export function initSettings() {
     populateForm();
     setupForm();
+    setupIntegrityTools();
 }
 
 /**
@@ -59,7 +61,7 @@ function handleSubmit(event) {
     const successEl = document.getElementById('settings-success');
 
     if (errors.length > 0) {
-        errorsEl.innerHTML = errors.map(e => `<div class="error-message">${e}</div>`).join('');
+        errorsEl.innerHTML = errors.map(e => `<div class="error-message">${escapeHtml(e)}</div>`).join('');
         successEl.textContent = '';
         return;
     }
@@ -70,4 +72,45 @@ function handleSubmit(event) {
 
     successEl.textContent = 'Settings saved!';
     setTimeout(() => { successEl.textContent = ''; }, 4000);
+}
+
+function setupIntegrityTools() {
+    const auditBtn = document.getElementById('btn-audit-integrity');
+    const repairBtn = document.getElementById('btn-repair-metadata');
+
+    if (!auditBtn || !repairBtn) return;
+
+    auditBtn.removeEventListener('click', handleAuditClick);
+    repairBtn.removeEventListener('click', handleRepairClick);
+
+    auditBtn.addEventListener('click', handleAuditClick);
+    repairBtn.addEventListener('click', handleRepairClick);
+}
+
+function handleAuditClick() {
+    const report = auditDataIntegrity();
+    const output = document.getElementById('integrity-output');
+
+    if (!output) return;
+
+    if (report.issueCount === 0) {
+        output.innerHTML = '<div class="success-message">No integrity issues found ✅</div>';
+        return;
+    }
+
+    output.innerHTML = `
+        <div class="error-message" style="margin-bottom: var(--spacing-sm);">
+            Found ${report.issueCount} issue(s):
+        </div>
+        ${report.issues.map(issue => `<div class="error-message">${escapeHtml(issue)}</div>`).join('')}
+    `;
+}
+
+function handleRepairClick() {
+    const result = repairRunMetadata();
+    const output = document.getElementById('integrity-output');
+
+    if (!output) return;
+
+    output.innerHTML = `<div class="success-message">Updated ${result.updatedRuns} run(s). Re-run integrity check to verify.</div>`;
 }

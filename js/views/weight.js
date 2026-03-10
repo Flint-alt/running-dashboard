@@ -5,6 +5,7 @@
 
 import { getWeights, saveWeight, getSettings } from '../data/storage.js';
 import { getTodayISO, formatDate } from '../utils/date.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 // Chart instance
 let weightChart = null;
@@ -281,7 +282,7 @@ function validateWeightData(weight) {
 function showErrors(errors) {
     const errorContainer = document.getElementById('weight-form-errors');
     errorContainer.innerHTML = errors.map(error =>
-        `<div class="error-message">${error}</div>`
+        `<div class="error-message">${escapeHtml(error)}</div>`
     ).join('');
 }
 

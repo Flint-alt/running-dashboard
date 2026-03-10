@@ -7,6 +7,7 @@ import { getRuns, getRunsForWeek, getRun, deleteRun, saveRun, getSettings, getCu
 import { parseStravaCSV, deduplicateRuns } from '../utils/stravaImport.js';
 import { getTodayISO, getCurrentWeek, formatDate, formatDateRange, getWeekDateRange, addDays, parseDate } from '../utils/date.js';
 import { formatPace, formatDuration, formatDistance, calculateAveragePace, predictFinishTime } from '../utils/pace.js';
+import { escapeHtml } from '../utils/sanitize.js';
 import { getWeekPlan, getNextMilestone } from '../data/trainingPlan.js';
 
 // Recent runs state
@@ -756,7 +757,7 @@ function createRunCard(run, sparklineRunsByType) {
         : '';
 
     // Escape HTML in notes to prevent XSS
-    const safeNotes = run.notes ? run.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+    const safeNotes = run.notes ? escapeHtml(run.notes) : '';
 
     // Missed run renders differently
     if (run.type === 'missed') {

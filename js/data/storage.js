@@ -733,3 +733,89 @@ export function getRunTypeDistribution() {
 
     return distribution;
 }
+
+/**
+ * Infer phase label from training week.
+ * @param {number|null} week - Training week
+ * @returns {string} Phase label
+ */
+function phaseFromWeek(week) {
+    if (!week || week < 1) return 'N/A';
+    if (week <= 12) return 'Phase 1: Build to 10k';
+    if (week <= 24) return 'Phase 2: Extend to 15k';
+    if (week <= 36) return 'Phase 3: Build to 20k';
+    if (week <= 44) return 'Phase 4: Race Prep & Taper';
+    return 'N/A';
+}
+
+/**
+ * Audit run metadata for invalid week/phase/date mismatches.
+ * @returns {{issueCount:number, issues:string[]}} Integrity report
+ */
+export function auditDataIntegrity() {
+    const store = getStore();
+    const settings = getSettings();
+    const issues = [];
+
+    store.runs.forEach((run, idx) => {
+        if (!run || typeof run !== 'object') {
+            issues.push(`Run #${idx + 1} is not a valid object.`);
+            return;
+        }
+
+        if (!run.date || typeof run.date !== 'string') {
+            issues.push(`Run ${run.id || '#' + (idx + 1)} is missing a valid date.`);
+            return;
+        }
+
+        const computedWeek = getCurrentWeek(run.date, settings.trainingPlanStart);
+        const normalizedWeek = (computedWeek >= 1 && computedWeek <= 44) ? computedWeek : null;
+
+        if ((run.week || null) !== normalizedWeek) {
+            issues.push(`Run ${run.id || '#' + (idx + 1)} has week=${run.week ?? 'null'} but should be ${normalizedWeek ?? 'null'}.`);
+        }
+
+        const expectedPhase = phaseFromWeek(normalizedWeek);
+        if ((run.phase || 'N/A') !== expectedPhase) {
+            issues.push(`Run ${run.id || '#' + (idx + 1)} has phase="${run.phase || 'N/A'}" but should be "${expectedPhase}".`);
+        }
+    });
+
+    return { issueCount: issues.length, issues };
+}
+
+/**
+ * Repair run metadata by recalculating week and phase from run date.
+ * @returns {{updatedRuns:number}} Number of updated runs
+ */
+export function repairRunMetadata() {
+    const store = getStore();
+    const settings = getSettings();
+
+    let updatedRuns = 0;
+
+    store.runs = store.runs.map(run => {
+        if (!run || typeof run !== 'object' || !run.date || typeof run.date !== 'string') {
+            return run;
+        }
+
+        const computedWeek = getCurrentWeek(run.date, settings.trainingPlanStart);
+        const normalizedWeek = (computedWeek >= 1 && computedWeek <= 44) ? computedWeek : null;
+        const expectedPhase = phaseFromWeek(normalizedWeek);
+
+        const needsUpdate = (run.week || null) !== normalizedWeek || (run.phase || 'N/A') !== expectedPhase;
+        if (!needsUpdate) {
+            return run;
+        }
+
+        updatedRuns++;
+        return {
+            ...run,
+            week: normalizedWeek,
+            phase: expectedPhase
+        };
+    });
+
+    setStore(store);
+    return { updatedRuns };
+}
